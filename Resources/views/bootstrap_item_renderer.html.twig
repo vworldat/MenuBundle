@@ -1,0 +1,10 @@
+
+{% set isMenuHeader = not not isMenuHeader|default(false) %}
+
+<li {% if item.isCurrentEndPoint() %}class="active"{% elseif item.isCurrent() %}class="active-inner"{% endif %}>
+    {% if item.isEnabled() %}
+        <a href="{{ item.getUrl() }}">{% if isMenuHeader %}{{ item.getTitleInMenuHeader() }}{% else %}{{ item.getTitle() }}{% endif %}</a>
+    {% else %}
+        <a href="#">{% if isMenuHeader %}{{ item.getTitleInMenuHeader() }}{% else %}{{ item.getTitle() }}{% endif %}</a>
+    {% endif %}
+</li>

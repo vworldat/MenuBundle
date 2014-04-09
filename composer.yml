@@ -1,0 +1,17 @@
+name:           c33s/menu-bundle
+type:           symfony-bundle
+description:    routing-based menu system for symfony2
+#keywords: []
+homepage: "https://github.com/vworldat/MenuBundle"
+license:       ["MIT", "GPL-3.0"]
+authors:
+  - name:       David
+    email:      office@web-emerge.com
+    homepage:   'http://web-emerge.com/'
+autoload:
+    psr-0:
+        'c33s\MenuBundle': ''
+target-dir: "c33s/MenuBundle"
+minimum-stability: stable
+require:
+    php: '>=5.3.3'

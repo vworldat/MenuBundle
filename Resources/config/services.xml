@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+    
+    <parameters>
+        <parameter key="c33s_menu.builder.class">c33s\MenuBundle\Builder\MenuBuilder</parameter>
+        <parameter key="c33s_menu.twig.extension.class">c33s\MenuBundle\Twig\Extension\MenuExtension</parameter>
+    </parameters>
+    
+    <services>
+        <service id="c33s_menu" class="%c33s_menu.builder.class%">
+            <argument>%c33s_menu.definitions%</argument>
+            <argument type="service" id="service_container" />
+            
+            <call method="initialize" />
+        </service>
+        
+        <service id="c33s_menu.twig.extension" class="%c33s_menu.twig.extension.class%">
+            <argument type="service" id="c33s_menu" />
+            
+            <tag name="twig.extension" />
+        </service>
+    </services>
+</container>

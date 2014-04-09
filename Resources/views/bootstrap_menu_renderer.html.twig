@@ -1,0 +1,39 @@
+
+{% set isSubMenu = not not isSubMenu|default(false) %}
+
+{% if not isSubMenu %}
+    <ul class="nav navbar-nav">
+{% endif %}
+
+{% for item in items %}
+    {% if item.hasPreDivider() %}<li class="divider"></li>{% endif %}
+    
+    {% if item.hasSectionHeader() %}
+        <li class="dropdown-header">{{ item.getSectionHeader() }}</li>
+    {% endif %}
+    
+    {% if item.isEnabled() and item.hasChildren() %}
+        
+        <li class="{% if isSubMenu %}dropdown-submenu{% else %}dropdown{% endif %} {% if item.isCurrent() %}active{% endif %}">
+            <a href="#" {% if not isSubMenu %}class="dropdown-toggle" data-toggle="dropdown"{% endif %}>
+                {{ item.getTitle() }}
+                {% if not isSubMenu %}<b class="caret"></b>{% endif %}
+            </a>
+            
+            <ul class="dropdown-menu">
+                {% include "c33sMenuBundle::bootstrap_item_renderer.html.twig" with { 'isMenuHeader': true } %}
+                
+                {% include "c33sMenuBundle::bootstrap_menu_renderer.html.twig" with { 'items': item.getChildren(), 'isSubMenu': true } %}
+            </ul>
+        </li>
+        
+    {% else %}
+        {% include "c33sMenuBundle::bootstrap_item_renderer.html.twig" %}
+    {% endif %}
+    
+    {% if item.hasPostDivider() %}<li class="divider"></li>{% endif %}
+{% endfor %}
+
+{% if not isSubMenu %}
+    </ul>
+{% endif %}
