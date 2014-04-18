@@ -27,7 +27,7 @@
             </ul>
         </li>
         
-    {% else %}
+    {% elseif item.isVisible() %}
         {% include "c33sMenuBundle::bootstrap_item_renderer.html.twig" %}
     {% endif %}
     
