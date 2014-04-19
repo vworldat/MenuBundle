@@ -15,3 +15,8 @@ target-dir: "c33s/MenuBundle"
 minimum-stability: stable
 require:
     php: '>=5.3.3'
+
+require-dev:
+    symfony/dependency-injection:   '~2.3'
+    symfony/http-foundation:        '~2.3'
+    symfony/routing:                '~2.3'
