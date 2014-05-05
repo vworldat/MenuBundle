@@ -18,6 +18,8 @@ class Menu
      */
     protected $container;
     
+    protected $defaults;
+    
     /**
      * The base item of the given menu. It will not appear anywhere, it's just there
      * to hold the other items.
@@ -29,19 +31,13 @@ class Menu
     public function __construct(array $itemData, ContainerInterface $container)
     {
         $this->container = $container;
-        $this->itemData = $this->mergeItemDefaults($itemData);
+        $this->itemData = $this->fetchDefaults($itemData);
         
         $this->configure();
         $this->initialize();
     }
     
-    /**
-     * Look for item defaults and merge them into the list of menu items.
-     * 
-     * @param array $itemData
-     * @return type
-     */
-    protected function mergeItemDefaults(array $itemData)
+    protected function fetchDefaults(array $itemData)
     {
         if (array_key_exists('.defaults', $itemData))
         {
@@ -59,10 +55,7 @@ class Menu
             $defaults['item_class'] = $this->getDefaultItemClass();
         }
         
-        foreach ($itemData as $key => $value)
-        {
-            $itemData[$key] = array_merge($defaults, $itemData[$key]);
-        }
+        $this->defaults = $defaults;
         
         return $itemData;
     }
@@ -77,7 +70,7 @@ class Menu
     
     /**
      * Get the default class name to use for first-level items.
-     * 
+     *
      * @return string
      */
     protected function getDefaultItemClass()
@@ -92,15 +85,17 @@ class Menu
     {
         $itemData = $this->getItemData();
         
-        
         $this->baseItem = $this->createItem('', array(
             'title' => '',
+            'item_class' => 'c33s\MenuBundle\Item\MenuItem',
             'children' => $itemData,
         ));
     }
     
     public function createItem($itemRouteName, array $itemOptions)
     {
+        $itemOptions = array_merge($this->defaults, $itemOptions);
+        
         $class = 'c33s\MenuBundle\Item\MenuItem';
         if (isset($itemOptions['item_class']))
         {
@@ -151,7 +146,7 @@ class Menu
      */
     public function hasParentClass($class, $parentName)
     {
-        return array_key_exists($parentName, $this->getAncestors($class));
+        return $class == $parentName || array_key_exists($parentName, $this->getAncestors($class));
     }
     
     /**

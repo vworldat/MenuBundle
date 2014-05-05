@@ -1,8 +1,9 @@
 
 {% set isSubMenu = not not isSubMenu|default(false) %}
+{% set containerClass = containerClass|default('nav navbar-nav') %}
 
 {% if not isSubMenu %}
-    <ul class="nav navbar-nav">
+    <ul class="{{ containerClass }}">
 {% endif %}
 
 {% for item in items %}
@@ -20,10 +21,12 @@
                     {{ item.getTitle() }}
                     {% if not isSubMenu %}<b class="caret"></b>{% endif %}
                 </a>
-
+                
                 <ul class="dropdown-menu">
-                    {% include "c33sMenuBundle::bootstrap_item_renderer.html.twig" with { 'isMenuHeader': true } %}
-
+                    {% if item.isShownInMenuHeader() %}
+                        {% include "c33sMenuBundle::bootstrap_item_renderer.html.twig" with { 'isMenuHeader': true } %}
+                    {% endif %}
+                    
                     {% include "c33sMenuBundle::bootstrap_menu_renderer.html.twig" with { 'items': item.getChildren(), 'isSubMenu': true } %}
                 </ul>
             </li>

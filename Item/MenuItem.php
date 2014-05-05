@@ -139,13 +139,20 @@ class MenuItem implements ContainerAwareInterface
     protected $sectionHeader = null;
     
     /**
+     * Name of bootstrap icon to use.
+     *
+     * @var string
+     */
+    protected $bootstrapIcon = null;
+    
+    /**
      * Construct a new menu item. It requires its routeName, options and
      * the menu the item is assigned to.
      *
      * The following options are available in the basic MenuItem implementation:
      * * title                 The item's title to display. By default this
      *                         is the only required option.
-     * * title_in_menu_header  Provider alternate title to use when header in 
+     * * title_in_menu_header  Provider alternate title to use when header in
      *                         drop-down menus
      * * anchor                Optional (html) anchor to add to the final item url
      * * item_group            You can optionally split items in one level
@@ -181,6 +188,7 @@ class MenuItem implements ContainerAwareInterface
      * * pre_divider           Divider before / above the item
      * * post_divider          Divider after / below the item
      * * section_header        Section header text to be displayed before / above the item
+     * * bootstrap_icon        Name of bootstrap icon to use
      *
      * @throws OptionRequiredException
      *
@@ -232,6 +240,7 @@ class MenuItem implements ContainerAwareInterface
             ->fetchCustomUrl()
             ->fetchAddRequestVariables()
             ->fetchAnchor()
+            ->fetchBootstrapIcon()
         ;
     }
     
@@ -343,7 +352,7 @@ class MenuItem implements ContainerAwareInterface
     
     /**
      * Check if the menu item has any children.
-     * 
+     *
      * @return boolean
      */
     public function hasChildren()
@@ -504,7 +513,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this
             ->fetchOption('title', true)
-            ->fetchOption('title_in_menu_header')
+            ->fetchOption('titleInMenuHeader')
         ;
     }
     
@@ -532,6 +541,16 @@ class MenuItem implements ContainerAwareInterface
         }
         
         return $this->getTitle();
+    }
+    
+    /**
+     * If title_in_menu_header is set to an empty string, the item will not be included in the menu
+     *
+     * @return boolean
+     */
+    public function isShownInMenuHeader()
+    {
+        return '' !== $this->titleInMenuHeader;
     }
     
     /**
@@ -565,13 +584,43 @@ class MenuItem implements ContainerAwareInterface
     }
     
     /**
-     * Check if the item has an anchor. 
-     * 
+     * Check if the item has an anchor.
+     *
      * @return boolean
      */
     public function hasAnchor()
     {
         return null !== $this->getAnchor();
+    }
+    
+    /**
+     * Fetch the item's "bootstrap_icon" option.
+     *
+     * @return MenuItem
+     */
+    protected function fetchBootstrapIcon()
+    {
+        return $this->fetchOption('bootstrapIcon');
+    }
+    
+    /**
+     * Get the bootstrap icon name.
+     *
+     * @return string
+     */
+    public function getBootstrapIcon()
+    {
+        return $this->bootstrapIcon;
+    }
+    
+    /**
+     * Check if the item has a bootstrap icon.
+     *
+     * @return boolean
+     */
+    public function hasBootstrapIcon()
+    {
+        return null !== $this->getBootstrapIcon();
     }
     
     /**
@@ -735,6 +784,16 @@ class MenuItem implements ContainerAwareInterface
     protected function getCustomUrl(array $urlParameters = array())
     {
         return $this->customUrl;
+    }
+    
+    /**
+     * Check if the item has a custom url.
+     *
+     * @return boolean
+     */
+    public function hasCustomUrl()
+    {
+        return null !== $this->customUrl;
     }
     
     /**
@@ -1051,7 +1110,7 @@ class MenuItem implements ContainerAwareInterface
     
     /**
      * Check if the item has a section header.
-     * 
+     *
      * @return type
      */
     public function hasSectionHeader()
@@ -1061,7 +1120,7 @@ class MenuItem implements ContainerAwareInterface
     
     /**
      * Get the section header text.
-     * 
+     *
      * @return string
      */
     public function getSectionHeader()

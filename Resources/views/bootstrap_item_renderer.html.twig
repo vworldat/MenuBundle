@@ -3,8 +3,15 @@
 
 <li {% if item.isCurrentEndPoint() %}class="active"{% elseif item.isCurrent() %}class="active-inner"{% endif %}>
     {% if item.isEnabled() %}
-        <a href="{{ item.getUrl() }}">{% if isMenuHeader %}{{ item.getTitleInMenuHeader() }}{% else %}{{ item.getTitle() }}{% endif %}</a>
+        <a href="{{ item.getUrl() }}">
+            {% if item.hasBootstrapIcon() %}<i class="{{ item.getBootstrapIcon() }}"></i> {% endif %}
+            {% if isMenuHeader %}{{ item.getTitleInMenuHeader() }}{% else %}{{ item.getTitle() }}{% endif %}
+            {% if item.hasCustomUrl() %}<i class="fa fa-external-link"></i>{% endif %}
+        </a>
     {% else %}
-        <a href="#">{% if isMenuHeader %}{{ item.getTitleInMenuHeader() }}{% else %}{{ item.getTitle() }}{% endif %}</a>
+        <a href="#">
+            {% if item.hasBootstrapIcon() %}<i class="{{ item.getBootstrapIcon() }}"></i> {% endif %}
+            {% if isMenuHeader %}{{ item.getTitleInMenuHeader() }}{% else %}{{ item.getTitle() }}{% endif %}
+        </a>
     {% endif %}
 </li>
