@@ -550,7 +550,7 @@ class MenuItem implements ContainerAwareInterface
      */
     public function isShownInMenuHeader()
     {
-        return '' !== $this->titleInMenuHeader;
+        return false !== $this->titleInMenuHeader;
     }
     
     /**
