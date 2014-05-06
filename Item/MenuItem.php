@@ -113,6 +113,11 @@ class MenuItem implements ContainerAwareInterface
     protected $addRequestVariables = array();
     
     /**
+     * @var array
+     */
+    protected $matchRequestVariables = array();
+    
+    /**
      * @var string
      */
     protected $url;
@@ -179,6 +184,10 @@ class MenuItem implements ContainerAwareInterface
      *                         be pulled from the request and added during url
      *                         generation. Of course this does not affect the
      *                         custom_url if provided.
+     * * match_request_variables
+     *                         Using this option you can specify request variables that
+     *                         have to match the current request to mark the item as
+     *                         current endpoint
      * * item_class            Specify a custom item class (full namespace).
      *                         The class must extend \c33s\MenuBundle\Item\MenuItem.
      *                         TODO: If it is prefixed with a +, it will be set for
@@ -239,6 +248,7 @@ class MenuItem implements ContainerAwareInterface
             ->fetchRequireRouteName()
             ->fetchCustomUrl()
             ->fetchAddRequestVariables()
+            ->fetchMatchRequestVariables()
             ->fetchAnchor()
             ->fetchBootstrapIcon()
         ;
@@ -821,6 +831,48 @@ class MenuItem implements ContainerAwareInterface
     }
     
     /**
+     * Fetch the item's "add_request_variables" option.
+     *
+     * @return MenuItem
+     */
+    protected function fetchMatchRequestVariables()
+    {
+        $this->fetchOption('matchRequestVariables');
+        $this->matchRequestVariables = (array) $this->matchRequestVariables;
+        
+        return $this;
+    }
+    
+    /**
+     * Get the request variable names that should be added when generating
+     * the item URL.
+     *
+     * @return array
+     */
+    protected function getMatchRequestVariables()
+    {
+        return $this->matchRequestVariables;
+    }
+    
+    /**
+     * Check if the current request is matching all required vars.
+     *
+     * @return boolean
+     */
+    protected function isMatchingRequestVariables()
+    {
+        foreach ($this->getMatchRequestVariables() as $key => $value)
+        {
+            if ($this->getRequest()->get($key) != $value)
+            {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
      * Set the item's option settings.
      *
      * @param array $options
@@ -952,6 +1004,16 @@ class MenuItem implements ContainerAwareInterface
     }
     
     /**
+     * Check if the given route name is matching the request route name or alias route names
+     *
+     * @return boolean
+     */
+    protected function isMatchingRouteName()
+    {
+        return $this->getCurrentRouteName() == $this->getRouteName() || array_key_exists($this->getCurrentRouteName(), $this->getAliasRouteNames());
+    }
+    
+    /**
      * Check if the item is currently selected itself. This is the case when
      * the current (request) route name matches the item route name or the
      * item's alias routes.
@@ -960,7 +1022,7 @@ class MenuItem implements ContainerAwareInterface
      */
     public function isCurrentEndPoint()
     {
-        return $this->getCurrentRouteName() == $this->getRouteName() || array_key_exists($this->getCurrentRouteName(), $this->getAliasRouteNames());
+        return $this->isMatchingRouteName() && $this->isMatchingRequestVariables();
     }
     
     /**
