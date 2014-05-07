@@ -69,19 +69,9 @@ class MenuItem implements ContainerAwareInterface
     protected $title;
     
     /**
-     * @var string
-     */
-    protected $titleInMenuHeader;
-    
-    /**
      * @var MenuItem
      */
     protected $parentItem = null;
-    
-    /**
-     * @var string
-     */
-    protected $itemGroup = 'default';
     
     /**
      * @var boolean
@@ -131,18 +121,13 @@ class MenuItem implements ContainerAwareInterface
     /**
      * @var boolean
      */
-	protected $preDivider = false;
-    
-    /**
-     * @var boolean
-     */
-	protected $postDivider = false;
+	protected $isDivider = false;
     
     /**
      *
      * @var string
      */
-    protected $sectionHeader = null;
+    protected $isSectionHeader = false;
     
     /**
      * Symfony security role required to enable this MenuItem
@@ -177,18 +162,34 @@ class MenuItem implements ContainerAwareInterface
     protected $customUrlIcon = 'fa fa-external-link';
     
     /**
+     * Provides default option values for all child items of this item. These will be assigned recursively.
+     *
+     * @var array
+     */
+    protected $defaultOptions = array();
+    
+    /**
+     * @var string
+     */
+    protected $itemTemplate = null;
+    
+    /**
+     * @var string
+     */
+    protected $submenuTemplate = null;
+    
+    /**
      * Construct a new menu item. It requires its routeName, options and
      * the menu the item is assigned to.
      *
      * The following options are available in the basic MenuItem implementation:
      * * title                      The item's title to display. By default this
      *                              is the only required option.
-     * * title_in_menu_header       Provider alternate title to use when header in
-     *                              drop-down menus
+     * * copy_to_children           Insert copy of this item as first child item.
+     *                              This is useful for drop-down menus where the button itself
+     *                              cannot contain the item. Defaults to false
+     * * copy_to_children_title     Alternate title to use when copying this item as first child.
      * * anchor                     Optional (html) anchor to add to the final item url
-     * * item_group                 You can optionally split items in one level
-     *                              into groups. To do so, provide group names.
-     *                              The default group is "default"
      * * visible                    Set to false to hide this item from rendering
      *                              by always returning false on MenuItem::isVisible()
      * * visible_if_disabled        If set to false, the item will be hidden from
@@ -225,10 +226,11 @@ class MenuItem implements ContainerAwareInterface
      *                              The class must extend \c33s\MenuBundle\Item\MenuItem.
      * * children                   The definition of child items as associative
      *                              array pointing routeNames to item options.
-     * * pre_divider                Divider before / above the item
-     * * post_divider               Divider after / below the item
-     * * section_header             Section header text to be displayed before / above the item
+     * * is_divider                 Set to true to display this item as divider
+     * * is_section_header          Set to true to make this item a section header
      * * bootstrap_icon             Name of bootstrap icon to use
+     * * item_template              Set a non-default (twig) template name for this item
+     * * submenu_template           Set a non-default (twig) template name for this item's submenu
      *
      * @throws OptionRequiredException
      *
@@ -269,20 +271,20 @@ class MenuItem implements ContainerAwareInterface
     protected function initOptions()
     {
         $this
+            ->fetchItemVariants()
+            ->fetchDefaultOptions()
             ->fetchTitle()
-            ->fetchItemGroup()
             ->fetchVisible()
             ->fetchVisibleIfDisabled()
-            ->fetchDividers()
-            ->fetchSectionHeader()
             ->fetchAliasRouteNames()
             ->fetchRequireRouteName()
             ->fetchCustomUrl()
             ->fetchAddRequestVariables()
             ->fetchMatchRequestVariables()
             ->fetchAnchor()
-            ->fetchBootstrapIcon()
+            ->fetchIcons()
             ->fetchRequireRole()
+            ->fetchTemplates()
         ;
     }
     
@@ -295,6 +297,17 @@ class MenuItem implements ContainerAwareInterface
         // additional configuration goes here
     }
     
+    protected function fetchDefaultOptions()
+    {
+        if (isset($this->options['children']['.defaults']))
+        {
+            $this->defaultOptions = (array) $this->options['children']['.defaults'];
+            unset($this->options['children']['.defaults']);
+        }
+        
+        return $this;
+    }
+    
     /**
      * Generate child items based on the passed options.
      */
@@ -305,9 +318,27 @@ class MenuItem implements ContainerAwareInterface
             return;
         }
         
+        $this->insertCopyToChildren();
+        
         foreach ($this->getOption('children') as $routeName => $options)
         {
             $this->addChildByData($routeName, $options);
+        }
+    }
+    
+    /**
+     * If the item is configured to insert itself as its first child, this will be done here.
+     */
+    protected function insertCopyToChildren()
+    {
+        if ($this->getOption('copy_to_children', false))
+        {
+            $options = $this->getOptions();
+            $options['children'] = array();
+            $options['copy_to_children'] = false;
+            $options['title'] = $this->getOption('copy_to_children_title', $this->getTitle());
+            
+            $this->addChildByData($this->getRouteName(), $options);
         }
     }
     
@@ -328,6 +359,16 @@ class MenuItem implements ContainerAwareInterface
      */
     public function addChildByData($routeName, $options, $position = 'last')
     {
+        if (isset($options['children']['.defaults']))
+        {
+            $options['children']['.defaults'] = array_merge($this->defaultOptions, $options['children']['.defaults']);
+        }
+        else
+        {
+            $options['children']['.defaults'] = $this->defaultOptions;
+        }
+        
+        $options = array_merge($this->defaultOptions, $options);
         $item = $this->getMenu()->createItem($routeName, $options);
         
         return $this->addChild($item, $position);
@@ -555,7 +596,6 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this
             ->fetchOption('title', true)
-            ->fetchOption('titleInMenuHeader')
         ;
     }
     
@@ -564,40 +604,9 @@ class MenuItem implements ContainerAwareInterface
      *
      * @return string
      */
-    public function getTitle($isMenuHeader = false)
+    public function getTitle()
     {
-        if ($isMenuHeader)
-        {
-            return $this->getTitleInMenuHeader();
-        }
-        
         return $this->title;
-    }
-    
-    /**
-     * Get the item's title to display when inside a menu header.
-     * If not defined, getTitle() is returned.
-     *
-     * @return string
-     */
-    public function getTitleInMenuHeader()
-    {
-        if (null !== $this->titleInMenuHeader)
-        {
-            return $this->titleInMenuHeader;
-        }
-        
-        return $this->getTitle();
-    }
-    
-    /**
-     * If title_in_menu_header is set to an empty string, the item will not be included in the menu
-     *
-     * @return boolean
-     */
-    public function isShownInMenuHeader()
-    {
-        return false !== $this->titleInMenuHeader;
     }
     
     /**
@@ -645,7 +654,7 @@ class MenuItem implements ContainerAwareInterface
      *
      * @return MenuItem
      */
-    protected function fetchBootstrapIcon()
+    protected function fetchIcons()
     {
         return $this
             ->fetchOption('bootstrapIcon')
@@ -664,6 +673,19 @@ class MenuItem implements ContainerAwareInterface
         return $this
             ->fetchOption('requireRole')
             ->fetchOption('enabledIfRoleMissing')
+        ;
+    }
+    
+    /**
+     * Fetch the item's "item_template" and "submenu_template" options.
+     *
+     * @return MenuItem
+     */
+    protected function fetchTemplates()
+    {
+        return $this
+            ->fetchOption('itemTemplate')
+            ->fetchOption('submenuTemplate')
         ;
     }
     
@@ -714,27 +736,6 @@ class MenuItem implements ContainerAwareInterface
     }
     
     /**
-     * Fetch the item's "item_group" option.
-     *
-     * @return MenuItem
-     */
-    protected function fetchItemGroup()
-    {
-        return $this->fetchOption('itemGroup');
-    }
-    
-    /**
-     * Get the item's group name. This can be used to separate items inside
-     * a single menu level.
-     *
-     * @return string
-     */
-    public function getItemGroup()
-    {
-        return $this->itemGroup;
-    }
-    
-    /**
      * Fetch the item's "visible" option.
      *
      * @return MenuItem
@@ -766,26 +767,47 @@ class MenuItem implements ContainerAwareInterface
     }
     
     /**
-     * Fetch the item's "pre_divider" and "post_divider" options.
+     * Check for specific item variations based on the route name. This is kinda hacky but useful.
      *
      * @return MenuItem
      */
-    protected function fetchDividers()
+    protected function fetchItemVariants()
     {
         return $this
-            ->fetchOption('preDivider')
-            ->fetchOption('postDivider')
+            ->fetchItemVariantDivider()
+            ->fetchItemVariantHeadline()
         ;
     }
     
     /**
-     * Fetch the item's "section_header" option.
+     * If the routename start with ".divider" the item will be used as a divider.
      *
      * @return MenuItem
      */
-    protected function fetchSectionHeader()
+    protected function fetchItemVariantDivider()
     {
-        return $this->fetchOption('sectionHeader');
+        if ($this->getOption('is_divider') || substr($this->getRouteName(), 0, 8) == '.divider')
+        {
+            $this->isDivider = true;
+            $this->options['title'] = 'dummy';
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * If the routename start with ".headline" the item will be used as a section header.
+     *
+     * @return MenuItem
+     */
+    protected function fetchItemVariantHeadline()
+    {
+        if ($this->getOption('is_section_header') || substr($this->getRouteName(), 0, 7) == '.header')
+        {
+            $this->isSectionHeader = true;
+        }
+        
+        return $this;
     }
     
     /**
@@ -1107,18 +1129,6 @@ class MenuItem implements ContainerAwareInterface
     }
     
     /**
-     * Check if the item is currently selected.
-     * An item will be marked selected if it is selected itself or any child
-     * item is selected.
-     *
-     * @return boolean    True if the item is currently selected in the menu
-     */
-    public function isCurrent()
-    {
-        return $this->isCurrentEndPoint() || $this->isParentOfCurrentEndPoint();
-    }
-    
-    /**
      * Check if the given route name is matching the request route name or alias route names
      *
      * @return boolean
@@ -1135,7 +1145,7 @@ class MenuItem implements ContainerAwareInterface
      *
      * @return boolean
      */
-    public function isCurrentEndPoint()
+    public function isCurrent()
     {
         return $this->isMatchingRouteName() && $this->isMatchingRequestVariables();
     }
@@ -1145,16 +1155,29 @@ class MenuItem implements ContainerAwareInterface
      *
      * @return boolean
      */
-    public function isParentOfCurrentEndPoint()
+    public function isCurrentAncestor()
     {
         foreach ($this->getChildren() as $child)
         {
-            if ($child->isCurrent())
+            if ($child->isCurrentAncestor())
             {
                 return true;
             }
         }
+        
         return false;
+    }
+    
+    /**
+     * Check if the item is somewhere on the path of the currently selected item.
+     * An item will be marked selected if it is selected itself or any child
+     * item is selected.
+     *
+     * @return boolean    True if the item path is currently selected in the menu
+     */
+    public function isOnCurrentPath()
+    {
+        return $this->isCurrent() || $this->isCurrentAncestor();
     }
     
     /**
@@ -1280,19 +1303,11 @@ class MenuItem implements ContainerAwareInterface
     }
     
 	/**
-	 * Check if this item is supposed to show a divider to its left / above.
+	 * Check if this item is supposed to render as a divider.
 	 */
-	public function hasPreDivider()
+	public function isDivider()
 	{
-		return (boolean) $this->preDivider;
-	}
-	
-	/**
-	 * Check if this item is supposed to show a divider to its right / below.
-	 */
-	public function hasPostDivider()
-	{
-		return (boolean) $this->postDivider;
+		return $this->isDivider;
 	}
     
     /**
@@ -1300,18 +1315,28 @@ class MenuItem implements ContainerAwareInterface
      *
      * @return type
      */
-    public function hasSectionHeader()
+    public function isSectionHeader()
     {
-        return null !== $this->sectionHeader;
+        return $this->isSectionHeader;
     }
     
     /**
-     * Get the section header text.
+     * Get the (twig) template name to use for rendering this item. This overrides the default in the twig renderer.
      *
      * @return string
      */
-    public function getSectionHeader()
+    public function getItemTemplate()
     {
-        return $this->sectionHeader;
+        return $this->itemTemplate;
+    }
+    
+    /**
+     * Get the (twig) template name to use for rendering the submenu of this item. This overrides the default in the twig renderer.
+     *
+     * @return string
+     */
+    public function getSubmenuTemplate()
+    {
+        return $this->submenuTemplate;
     }
 }

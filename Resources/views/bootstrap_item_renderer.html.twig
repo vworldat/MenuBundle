@@ -1,11 +1,19 @@
 
-{% set isMenuHeader = not not isMenuHeader|default(false) %}
+{% set hasChildren = item.hasChildren() %}
+{% set isEnabled = item.isEnabled() %}
+{% set itemClass = '' %}
+{% if hasChildren %}{% set itemClass = itemClass ~ ' dropdown-toggle' %}{% endif %}
+{% if not isEnabled %}{% set itemClass = itemClass ~ ' item-disabled' %}{% endif %}
 
-<li {% if item.isCurrentEndPoint() %}class="active"{% elseif item.isCurrent() %}class="active-inner"{% endif %}>
-    {% if item.isEnabled() %}<a href="{{ item.getUrl() }}">{% else %}<a href="#" class="item-disabled">{% endif %}
-        {% if item.hasBootstrapIcon() %}<i class="{{ item.getBootstrapIcon() }}"></i> {% endif %}
-        {{ item.getTitle(isMenuHeader) }}
-        {% if item.hasCustomUrlIcon() %}<i class="{{ item.getCustomUrlIcon() }}"></i>{% endif %}
-        {% if item.hasLockIcon() %}<i class="{{ item.getLockIcon() }}"></i> {% endif %}
-    </a>
-</li>
+{% block list_item_tag_open %}<li class="{% if item.isCurrent() %}active{% elseif item.isCurrentAncestor() %}active-inner{% endif %}">{% endblock %}
+    {% block link_tag_open %}<a href="{{ isEnabled ? item.getUrl() : '#' }}" class="{{ itemClass }}" {% if hasChildren %}data-toggle="dropdown"{% endif %}>{% endblock %}
+        {% block item_data %}
+	        {% block item_bootstrap_icon %}{% if item.hasBootstrapIcon() %}<i class="{{ item.getBootstrapIcon() }}"></i> {% endif %}{% endblock %}
+	        {% block item_title %}{{ item.getTitle() }}{% endblock %}
+	        {% block item_custom_url_icon %}{% if item.hasCustomUrlIcon() %}<i class="{{ item.getCustomUrlIcon() }}"></i>{% endif %}{% endblock %}
+	        {% block item_lock_icon %}{% if item.hasLockIcon() %}<i class="{{ item.getLockIcon() }}"></i>{% endif %}{% endblock %}
+	        {% block item_caret %}{% if hasChildren %}<b class="caret"></b>{% endif %}{% endblock %}
+        {% endblock %}
+    {% block link_tag_close %}</a>{% endblock %}
+    {% block submenu %}{% if hasChildren %}{% include item.getSubmenuTemplate()|default("c33sMenuBundle::bootstrap_menu_renderer.html.twig") with { 'items': item.getChildren(), 'containerClass': 'dropdown-menu' } %}{% endif %}{% endblock %}
+{% block list_item_tag_close %}</li>{% endblock %}

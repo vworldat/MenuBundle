@@ -85,26 +85,51 @@ class Menu
     {
         $itemData = $this->getItemData();
         
+        $itemsMerged = array();
+        foreach ($itemData as $key => $itemOptions)
+        {
+            $itemsMerged[$key] = array_merge($this->defaults, $itemOptions);
+            
+            if (isset($itemsMerged[$key]['children']['.defaults']))
+            {
+                $itemsMerged[$key]['children']['.defaults'] = array_merge($this->defaults, $itemsMerged[$key]['children']['.defaults']);
+            }
+            else
+            {
+                $itemsMerged[$key]['children']['.defaults'] = $this->defaults;
+            }
+        }
+        
         $this->baseItem = $this->createItem('', array(
             'title' => '',
             'item_class' => 'c33s\MenuBundle\Item\MenuItem',
-            'children' => $itemData,
+            'children' => $itemsMerged,
         ));
     }
     
+    /**
+     * MenuItem factory method.
+     *
+     * @param string $itemRouteName
+     * @param array $itemOptions
+     * @throws NoMenuItemClassException
+     *
+     * @return MenuItem
+     */
     public function createItem($itemRouteName, array $itemOptions)
     {
-        $itemOptions = array_merge($this->defaults, $itemOptions);
-        
-        $class = 'c33s\MenuBundle\Item\MenuItem';
         if (isset($itemOptions['item_class']))
         {
-            if (!$this->hasParentClass($itemOptions['item_class'], $class))
+            if (!$this->hasParentClass($itemOptions['item_class'], 'c33s\MenuBundle\Item\MenuItem'))
             {
                 throw new NoMenuItemClassException(sprintf('Item class %s does not extend \c33s\MenuBundle\Item\MenuItem', $itemOptions['item_class']));
             }
             
             $class = $itemOptions['item_class'];
+        }
+        else
+        {
+            $class = $this->getDefaultItemClass();
         }
         
         $item = new $class($itemRouteName, $itemOptions, $this);

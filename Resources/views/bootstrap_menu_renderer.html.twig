@@ -1,44 +1,18 @@
 
-{% set isSubMenu = not not isSubMenu|default(false) %}
-{% set containerClass = containerClass|default('nav navbar-nav') %}
+{% block list_tag_open %}<ul class="{{ containerClass|default('nav navbar-nav') }}">{% endblock %}
 
-{% if not isSubMenu %}
-    <ul class="{{ containerClass }}">
-{% endif %}
+{% block items %}
+    {% for item in items if item.isVisible() %}
+        {% block item_variants %}
+            {% if item.isDivider() %}
+                {% block item_is_divider %}<li class="divider"></li>{% endblock %}
+            {% elseif item.isSectionHeader() %}
+                {% block item_is_header %}<li class="dropdown-header">{{ item.getTitle() }}</li>{% endblock %}
+            {% else %}
+               {% block item_include %}{% include item.getItemTemplate()|default("c33sMenuBundle::bootstrap_item_renderer.html.twig") %}{% endblock %}
+            {% endif %}
+        {% endblock %}
+    {% endfor %}
+{% endblock %}
 
-{% for item in items %}
-    {% if item.isVisible() %}
-        {% if item.hasPreDivider() %}<li class="divider"></li>{% endif %}
-        
-        {% if item.hasSectionHeader() %}
-            <li class="dropdown-header">{{ item.getSectionHeader() }}</li>
-        {% endif %}
-        
-        {% if item.isEnabled() and item.hasChildren() %}
-            
-            <li class="{% if isSubMenu %}dropdown-submenu{% else %}dropdown{% endif %} {% if item.isCurrent() %}active{% endif %}">
-                <a href="#" {% if not isSubMenu %}class="dropdown-toggle" data-toggle="dropdown"{% endif %}>
-                    {{ item.getTitle() }}
-                    {% if not isSubMenu %}<b class="caret"></b>{% endif %}
-                </a>
-                
-                <ul class="dropdown-menu">
-                    {% if item.isShownInMenuHeader() %}
-                        {% include "c33sMenuBundle::bootstrap_item_renderer.html.twig" with { 'isMenuHeader': true } %}
-                    {% endif %}
-                    
-                    {% include "c33sMenuBundle::bootstrap_menu_renderer.html.twig" with { 'items': item.getChildren(), 'isSubMenu': true } %}
-                </ul>
-            </li>
-            
-        {% else %}
-            {% include "c33sMenuBundle::bootstrap_item_renderer.html.twig" %}
-        {% endif %}
-        
-        {% if item.hasPostDivider() %}<li class="divider"></li>{% endif %}
-    {% endif %}
-{% endfor %}
-
-{% if not isSubMenu %}
-    </ul>
-{% endif %}
+{% block list_tag_close %}</ul>{% endblock %}
