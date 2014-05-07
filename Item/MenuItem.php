@@ -91,7 +91,7 @@ class MenuItem implements ContainerAwareInterface
     /**
      * @var boolean
      */
-    protected $visibleIfDisabled = true;
+    protected $visibleIfDisabled = false;
     
     /**
      * @var string
