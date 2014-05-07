@@ -9,6 +9,7 @@ use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Security\Core\SecurityContextInterface;
 
 /**
  * @author david
@@ -144,6 +145,18 @@ class MenuItem implements ContainerAwareInterface
     protected $sectionHeader = null;
     
     /**
+     * Symfony security role required to enable this MenuItem
+     *
+     * @var string
+     */
+    protected $requireRole = null;
+    
+    /**
+     * @var boolean
+     */
+    protected $enabledIfRoleMissing = false;
+    
+    /**
      * Name of bootstrap icon to use.
      *
      * @var string
@@ -151,53 +164,71 @@ class MenuItem implements ContainerAwareInterface
     protected $bootstrapIcon = null;
     
     /**
+     * (bootstrap) icon class name to display next to disabled items due to missing role.
+     *
+     * @var string
+     */
+    protected $lockIcon = 'fa fa-lock';
+    
+    /**
+     *
+     * @var string
+     */
+    protected $customUrlIcon = 'fa fa-external-link';
+    
+    /**
      * Construct a new menu item. It requires its routeName, options and
      * the menu the item is assigned to.
      *
      * The following options are available in the basic MenuItem implementation:
-     * * title                 The item's title to display. By default this
-     *                         is the only required option.
-     * * title_in_menu_header  Provider alternate title to use when header in
-     *                         drop-down menus
-     * * anchor                Optional (html) anchor to add to the final item url
-     * * item_group            You can optionally split items in one level
-     *                         into groups. To do so, provide group names.
-     *                         The default group is "default"
-     * * visible               Set to false to hide this item from rendering
-     *                         by always returning false on MenuItem::isVisible()
-     * * visible_if_disabled   If set to false, the item will be hidden from
-     *                         rendering when not enabled.
-     * * alias_route_names     Provide alias route names for the current route
-     *                         name to mark the item as "current".
-     * * require_route_name    If this option is set, the item will be disabled
-     *                         if the current route name does not match the
-     *                         given value. This provides an easy way to hook
-     *                         an item to another item.
-     *                         If prefixed with a !, the item will only be
-     *                         enabled if the route name is NOT the given one.
-     * * custom_url            Provide a custom url that is used instead of
-     *                         the item's routeName. If this option is set,
-     *                         the routeName may be a dummy one. Beware
-     *                         that it is still added to the alias routes.
-     * * add_request_variables When this option is provided either as single
-     *                         string or array, the given variable names will
-     *                         be pulled from the request and added during url
-     *                         generation. Of course this does not affect the
-     *                         custom_url if provided.
-     * * match_request_variables
-     *                         Using this option you can specify request variables that
-     *                         have to match the current request to mark the item as
-     *                         current endpoint
-     * * item_class            Specify a custom item class (full namespace).
-     *                         The class must extend \c33s\MenuBundle\Item\MenuItem.
-     *                         TODO: If it is prefixed with a +, it will be set for
-     *                         all child items until defined otherwiese.
-     * * children              The definition of child items as associative
-     *                         array pointing routeNames to item options.
-     * * pre_divider           Divider before / above the item
-     * * post_divider          Divider after / below the item
-     * * section_header        Section header text to be displayed before / above the item
-     * * bootstrap_icon        Name of bootstrap icon to use
+     * * title                      The item's title to display. By default this
+     *                              is the only required option.
+     * * title_in_menu_header       Provider alternate title to use when header in
+     *                              drop-down menus
+     * * anchor                     Optional (html) anchor to add to the final item url
+     * * item_group                 You can optionally split items in one level
+     *                              into groups. To do so, provide group names.
+     *                              The default group is "default"
+     * * visible                    Set to false to hide this item from rendering
+     *                              by always returning false on MenuItem::isVisible()
+     * * visible_if_disabled        If set to false, the item will be hidden from
+     *                              rendering when not enabled.
+     * * alias_route_names          Provide alias route names for the current route
+     *                              name to mark the item as "current".
+     * * require_route_name         If this option is set, the item will be disabled
+     *                              if the current route name does not match the
+     *                              given value. This provides an easy way to hook
+     *                              an item to another item.
+     *                              If prefixed with a !, the item will only be
+     *                              enabled if the route name is NOT the given one.
+     * * custom_url                 Provide a custom url that is used instead of
+     *                              the item's routeName. If this option is set,
+     *                              the routeName may be a dummy one. Beware
+     *                              that it is still added to the alias routes.
+     * * custom_url_icon            Class name of (bootstrap) icon to display for custom url
+     *                              Defaults to font-awesome 4.x "fa fa-external-link"
+     * * add_request_variables      When this option is provided either as single
+     *                              string or array, the given variable names will
+     *                              be pulled from the request and added during url
+     *                              generation. Of course this does not affect the
+     *                              custom_url if provided.
+     * * match_request_variables    Using this option you can specify request variables that
+     *                              have to match the current request to mark the item as
+     *                              current endpoint
+     * * require_role               Specify a role that the security context has to contain
+     *                              to enable this MenuItem
+     * * enabled_if_role_missing    Define if the item should be enabled if the required role is missing
+     *                              Defaults to false
+     * * lock_icon                  (bootstrap) icon class name to display next to disabled items
+     *                              due to missing role. Defaults to font-awesome 4.x "fa fa-lock"
+     * * item_class                 Specify a custom item class (full namespace).
+     *                              The class must extend \c33s\MenuBundle\Item\MenuItem.
+     * * children                   The definition of child items as associative
+     *                              array pointing routeNames to item options.
+     * * pre_divider                Divider before / above the item
+     * * post_divider               Divider after / below the item
+     * * section_header             Section header text to be displayed before / above the item
+     * * bootstrap_icon             Name of bootstrap icon to use
      *
      * @throws OptionRequiredException
      *
@@ -251,6 +282,7 @@ class MenuItem implements ContainerAwareInterface
             ->fetchMatchRequestVariables()
             ->fetchAnchor()
             ->fetchBootstrapIcon()
+            ->fetchRequireRole()
         ;
     }
     
@@ -532,8 +564,13 @@ class MenuItem implements ContainerAwareInterface
      *
      * @return string
      */
-    public function getTitle()
+    public function getTitle($isMenuHeader = false)
     {
+        if ($isMenuHeader)
+        {
+            return $this->getTitleInMenuHeader();
+        }
+        
         return $this->title;
     }
     
@@ -610,7 +647,24 @@ class MenuItem implements ContainerAwareInterface
      */
     protected function fetchBootstrapIcon()
     {
-        return $this->fetchOption('bootstrapIcon');
+        return $this
+            ->fetchOption('bootstrapIcon')
+            ->fetchOption('lockIcon')
+            ->fetchOption('customUrlIcon')
+        ;
+    }
+    
+    /**
+     * Fetch the item's "require_role" option.
+     *
+     * @return MenuItem
+     */
+    protected function fetchRequireRole()
+    {
+        return $this
+            ->fetchOption('requireRole')
+            ->fetchOption('enabledIfRoleMissing')
+        ;
     }
     
     /**
@@ -631,6 +685,32 @@ class MenuItem implements ContainerAwareInterface
     public function hasBootstrapIcon()
     {
         return null !== $this->getBootstrapIcon();
+    }
+    
+    /**
+     * Check if the item has a lock icon.
+     * By default this is the case if the item is disabled due to security restrictions.
+     *
+     * @return boolean
+     */
+    public function hasLockIcon()
+    {
+        if (null === $this->lockIcon)
+        {
+            return false;
+        }
+        
+        return !$this->userHasRequiredRole();
+    }
+    
+    /**
+     * Get the lock icon class name.
+     *
+     * @return boolean
+     */
+    public function getLockIcon()
+    {
+        return $this->lockIcon;
     }
     
     /**
@@ -807,6 +887,26 @@ class MenuItem implements ContainerAwareInterface
     }
     
     /**
+     * Check if the item should display a custom url icon (e.g. for external links)
+     *
+     * @return boolean
+     */
+    public function hasCustomUrlIcon()
+    {
+        return null !== $this->customUrl && '' != $this->customUrlIcon;
+    }
+    
+    /**
+     * Get the icon class to display next to custom urls.
+     *
+     * @return boolean
+     */
+    public function getCustomUrlIcon()
+    {
+        return $this->customUrlIcon;
+    }
+    
+    /**
      * Fetch the item's "add_request_variables" option.
      *
      * @return MenuItem
@@ -954,6 +1054,21 @@ class MenuItem implements ContainerAwareInterface
     }
     
     /**
+     * Check the require_role option and check with the security context if necessary.
+     *
+     * @return boolean
+     */
+    public function userHasRequiredRole()
+    {
+        if (null === $this->requireRole)
+        {
+            return true;
+        }
+        
+        return $this->getSecurityContext()->isGranted($this->requireRole);
+    }
+    
+    /**
      * Check if the item is visible (should be rendered) or not.
      *
      * @return boolean
@@ -988,7 +1103,7 @@ class MenuItem implements ContainerAwareInterface
             }
         }
         
-        return true;
+        return $this->enabledIfRoleMissing || $this->userHasRequiredRole();
     }
     
     /**
@@ -1085,6 +1200,16 @@ class MenuItem implements ContainerAwareInterface
         }
         
         return $this->router;
+    }
+    
+    /**
+     * Get the security context
+     *
+     * @return SecurityContextInterface
+     */
+    protected function getSecurityContext()
+    {
+        return $this->getContainer()->get('security.context');
     }
     
     /**

@@ -2,16 +2,10 @@
 {% set isMenuHeader = not not isMenuHeader|default(false) %}
 
 <li {% if item.isCurrentEndPoint() %}class="active"{% elseif item.isCurrent() %}class="active-inner"{% endif %}>
-    {% if item.isEnabled() %}
-        <a href="{{ item.getUrl() }}">
-            {% if item.hasBootstrapIcon() %}<i class="{{ item.getBootstrapIcon() }}"></i> {% endif %}
-            {% if isMenuHeader %}{{ item.getTitleInMenuHeader() }}{% else %}{{ item.getTitle() }}{% endif %}
-            {% if item.hasCustomUrl() %}<i class="fa fa-external-link"></i>{% endif %}
-        </a>
-    {% else %}
-        <a href="#">
-            {% if item.hasBootstrapIcon() %}<i class="{{ item.getBootstrapIcon() }}"></i> {% endif %}
-            {% if isMenuHeader %}{{ item.getTitleInMenuHeader() }}{% else %}{{ item.getTitle() }}{% endif %}
-        </a>
-    {% endif %}
+    {% if item.isEnabled() %}<a href="{{ item.getUrl() }}">{% else %}<a href="#" class="item-disabled">{% endif %}
+        {% if item.hasBootstrapIcon() %}<i class="{{ item.getBootstrapIcon() }}"></i> {% endif %}
+        {{ item.getTitle(isMenuHeader) }}
+        {% if item.hasCustomUrlIcon() %}<i class="{{ item.getCustomUrlIcon() }}"></i>{% endif %}
+        {% if item.hasLockIcon() %}<i class="{{ item.getLockIcon() }}"></i> {% endif %}
+    </a>
 </li>
