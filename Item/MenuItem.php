@@ -10,6 +10,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\SecurityContextInterface;
+use c33s\MenuBundle\Exception\InvalidConfigException;
+use Symfony\Component\PropertyAccess\PropertyPath;
+use Symfony\Component\PropertyAccess\PropertyAccess;
 
 /**
  * @author david
@@ -106,6 +109,11 @@ class MenuItem implements ContainerAwareInterface
     /**
      * @var array
      */
+    protected $setRequestVariables = array();
+    
+    /**
+     * @var array
+     */
     protected $matchRequestVariables = array();
     
     /**
@@ -121,7 +129,7 @@ class MenuItem implements ContainerAwareInterface
     /**
      * @var boolean
      */
-	protected $isDivider = false;
+    protected $isDivider = false;
     
     /**
      *
@@ -178,6 +186,13 @@ class MenuItem implements ContainerAwareInterface
      */
     protected $submenuTemplate = null;
     
+    protected $propelClassName = null;
+    protected $propelQueryMethods = array();
+    protected $propelChildRouteParameters = array('id');
+    protected $propelChildRoute = null;
+    protected $propelChildOptions = array();
+    protected $propelTitleField = null;
+    
     /**
      * Construct a new menu item. It requires its routeName, options and
      * the menu the item is assigned to.
@@ -216,6 +231,7 @@ class MenuItem implements ContainerAwareInterface
      * * match_request_variables    Using this option you can specify request variables that
      *                              have to match the current request to mark the item as
      *                              current endpoint
+     * * set_request_variables      Supply additional request variables to set to a specific value
      * * require_role               Specify a role that the security context has to contain
      *                              to enable this MenuItem
      * * enabled_if_role_missing    Define if the item should be enabled if the required role is missing
@@ -231,6 +247,18 @@ class MenuItem implements ContainerAwareInterface
      * * bootstrap_icon             Name of bootstrap icon to use
      * * item_template              Set a non-default (twig) template name for this item
      * * submenu_template           Set a non-default (twig) template name for this item's submenu
+     *
+     * * propel                     Auto-generate children fetched from a propel collection
+     *       class_name             Propel model class name to use (full namespace)
+     *       child_route            Route name to use for generated child elements
+     *
+     *       query_methods          Optional list of query methods to apply to the query in the format:
+     *           filterByXY:        [ method, parameters]
+     *       child_route_parameters Optional list of parameters to extract from the each object and use
+     *                              as route parameters / request variables. Defaults to [ id ]
+     *       child_options          Additional menu item options only to use for the generated children, such as item_class
+     *       title_field            Field to use for children titles. If not set, a __toString() cast will be used.
+     *
      *
      * @throws OptionRequiredException
      *
@@ -280,11 +308,13 @@ class MenuItem implements ContainerAwareInterface
             ->fetchRequireRouteName()
             ->fetchCustomUrl()
             ->fetchAddRequestVariables()
+            ->fetchSetRequestVariables()
             ->fetchMatchRequestVariables()
             ->fetchAnchor()
             ->fetchIcons()
             ->fetchRequireRole()
             ->fetchTemplates()
+            ->fetchPropel()
         ;
     }
     
@@ -324,6 +354,8 @@ class MenuItem implements ContainerAwareInterface
         {
             $this->addChildByData($routeName, $options);
         }
+        
+        $this->generatePropelChildren();
     }
     
     /**
@@ -690,6 +722,110 @@ class MenuItem implements ContainerAwareInterface
     }
     
     /**
+     * Fetch the item's "propel" option and sub options.
+     *
+     * @return MenuItem
+     */
+    protected function fetchPropel()
+    {
+        if (!$this->hasOption('propel'))
+        {
+            return $this;
+        }
+        
+        $config = $this->getOption('propel');
+        
+        if (!isset($config['class_name']))
+        {
+            throw new OptionRequiredException('Propel menu item requires "propel/class_name" config value in menu config');
+        }
+        elseif (!class_exists($config['class_name']))
+        {
+            throw new InvalidConfigException('Class does not exist: ' . $config['class_name']);
+        }
+        elseif (!is_subclass_of($config['class_name'], '\Persistent'))
+        {
+            throw new InvalidConfigException('Invalid propel class name. Class does not implement \Persistent interface: ' . $config['class_name']);
+        }
+        $this->propelClassName = $config['class_name'];
+        
+        if (!isset($config['child_route']))
+        {
+            throw new OptionRequiredException('Propel menu item requires "propel/child_route" config value in menu config');
+        }
+        $this->propelChildRoute = $config['child_route'];
+        
+        if (isset($config['child_route_parameters']))
+        {
+            $this->propelChildRouteParameters = (array) $config['child_route_parameters'];
+        }
+        if (isset($config['child_options']))
+        {
+            $this->propelChildOptions = (array) $config['child_options'];
+        }
+        if (isset($config['title_field']))
+        {
+            $this->propelTitleField = $config['title_field'];
+        }
+        
+        if (isset($config['query_methods']) && is_array($config['query_methods']))
+        {
+            foreach ($config['query_methods'] as $name => $values)
+            {
+                $this->propelQueryMethods[$name] = (array) $values;
+            }
+        }
+    }
+    
+    /**
+     * Generate propel children if the specific config was set.
+     */
+    protected function generatePropelChildren()
+    {
+        if (null === $this->propelClassName)
+        {
+            return;
+        }
+        
+        $queryClass = $this->propelClassName.'Query';
+        $query = $queryClass::create();
+        
+        foreach ($this->propelQueryMethods as $method => $params)
+        {
+            call_user_func_array(array($query, $method), $params);
+        }
+        
+        $accessor = PropertyAccess::getPropertyAccessor();
+        
+        $elements = $query->find();
+        foreach ($elements as $element)
+        {
+            $options = $this->propelChildOptions;
+            
+            if (null !== $this->propelTitleField)
+            {
+                $options['title'] = $accessor->getValue($element, $this->propelTitleField);
+            }
+            else
+            {
+                $options['title'] = (string) $element;
+            }
+            
+            if (!isset($options['set_request_variables']))
+            {
+                $options['set_request_variables'] = array();
+            }
+            
+            foreach ($this->propelChildRouteParameters as $param)
+            {
+                $options['set_request_variables'][$param] = $accessor->getValue($element, $param);
+            }
+            
+            $this->addChildByData($this->propelChildRoute, $options);
+        }
+    }
+    
+    /**
      * Get the bootstrap icon name.
      *
      * @return string
@@ -942,6 +1078,19 @@ class MenuItem implements ContainerAwareInterface
     }
     
     /**
+     * Fetch the item's "set_request_variables" option.
+     *
+     * @return MenuItem
+     */
+    protected function fetchSetRequestVariables()
+    {
+        $this->fetchOption('setRequestVariables');
+        $this->setRequestVariables = (array) $this->setRequestVariables;
+        
+        return $this;
+    }
+    
+    /**
      * Get the request variable names that should be added when generating
      * the item URL.
      *
@@ -950,6 +1099,16 @@ class MenuItem implements ContainerAwareInterface
     protected function getAddRequestVariables()
     {
         return $this->addRequestVariables;
+    }
+    
+    /**
+     * Get the request variable names and values to add when generating the item URL.
+     *
+     * @return array
+     */
+    protected function getSetRequestVariables()
+    {
+        return $this->setRequestVariables;
     }
     
     /**
@@ -1298,17 +1457,21 @@ class MenuItem implements ContainerAwareInterface
         {
             $urlParameters[$key] = $this->getRequest()->get($key);
         }
+        foreach ($this->getSetRequestVariables() as $key => $value)
+        {
+            $urlParameters[$key] = $value;
+        }
         
         return $urlParameters;
     }
     
-	/**
-	 * Check if this item is supposed to render as a divider.
-	 */
-	public function isDivider()
-	{
-		return $this->isDivider;
-	}
+    /**
+     * Check if this item is supposed to render as a divider.
+     */
+    public function isDivider()
+    {
+        return $this->isDivider;
+    }
     
     /**
      * Check if the item has a section header.
