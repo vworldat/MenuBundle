@@ -186,6 +186,12 @@ class MenuItem implements ContainerAwareInterface
      */
     protected $submenuTemplate = null;
     
+    /**
+     *
+     * @var mixed
+     */
+    protected $customObject;
+    
     protected $propelClassName = null;
     protected $propelQueryMethods = array();
     protected $propelChildRouteParameters = array('id');
@@ -249,6 +255,7 @@ class MenuItem implements ContainerAwareInterface
      * * submenu_template           Set a non-default (twig) template name for this item's submenu
      *
      * * propel                     Auto-generate children fetched from a propel collection
+     *                              Each element will be injected into its menu item as custom_object
      *       class_name             Propel model class name to use (full namespace)
      *       child_route            Route name to use for generated child elements
      *
@@ -259,6 +266,7 @@ class MenuItem implements ContainerAwareInterface
      *       child_options          Additional menu item options only to use for the generated children, such as item_class
      *       title_field            Field to use for children titles. If not set, a __toString() cast will be used.
      *
+     * * custom_object              Provide custom object that availably inside the menu item
      *
      * @throws OptionRequiredException
      *
@@ -315,6 +323,7 @@ class MenuItem implements ContainerAwareInterface
             ->fetchRequireRole()
             ->fetchTemplates()
             ->fetchPropel()
+            ->fetchCustomObject()
         ;
     }
     
@@ -722,6 +731,38 @@ class MenuItem implements ContainerAwareInterface
     }
     
     /**
+     * Fetch the item's "custom_object" option.
+     *
+     * @return MenuItem
+     */
+    protected function fetchCustomObject()
+    {
+        return $this
+            ->fetchOption('customObject')
+        ;
+    }
+    
+    /**
+     * Check if this item contains a custom object
+     *
+     * @return boolean
+     */
+    public function hasCustomObject()
+    {
+        return null !== $this->customObject;
+    }
+    
+    /**
+     * Get the item's custom object, whatever it is.
+     *
+     * @return mixed
+     */
+    public function getCustomObject()
+    {
+        return $this->customObject;
+    }
+    
+    /**
      * Fetch the item's "propel" option and sub options.
      *
      * @return MenuItem
@@ -775,6 +816,8 @@ class MenuItem implements ContainerAwareInterface
                 $this->propelQueryMethods[$name] = (array) $values;
             }
         }
+        
+        return $this;
     }
     
     /**
@@ -820,6 +863,8 @@ class MenuItem implements ContainerAwareInterface
             {
                 $options['set_request_variables'][$param] = $accessor->getValue($element, $param);
             }
+            
+            $options['custom_object'] = $element;
             
             $this->addChildByData($this->propelChildRoute, $options);
         }
