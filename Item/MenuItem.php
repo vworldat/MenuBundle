@@ -861,7 +861,9 @@ class MenuItem implements ContainerAwareInterface
             
             foreach ($this->propelChildRouteParameters as $param)
             {
-                $options['set_request_variables'][$param] = $accessor->getValue($element, $param);
+                $value = $accessor->getValue($element, $param);
+                $options['set_request_variables'][$param] = $value;
+                $options['match_request_variables'][$param] = $value;
             }
             
             $options['custom_object'] = $element;
@@ -1363,7 +1365,7 @@ class MenuItem implements ContainerAwareInterface
     {
         foreach ($this->getChildren() as $child)
         {
-            if ($child->isCurrentAncestor())
+            if ($child->isOnCurrentPath())
             {
                 return true;
             }
