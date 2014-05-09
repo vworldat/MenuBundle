@@ -17,6 +17,7 @@ class MenuBuilder
      * @var array
      */
     protected $menuDefinitions;
+    protected $itemClassAliases;
     
     protected $menus = array();
     
@@ -25,10 +26,11 @@ class MenuBuilder
      *
      * @param array $menuDefinitions
      */
-    public function __construct(array $menuDefinitions, ContainerInterface $container)
+    public function __construct(array $menuDefinitions, ContainerInterface $container, array $itemClassAliases = array())
     {
         $this->menuDefinitions = $menuDefinitions;
         $this->container = $container;
+        $this->itemClassAliases = $itemClassAliases;
     }
     
     /**
@@ -49,7 +51,7 @@ class MenuBuilder
                 $menuClass = 'c33s\MenuBundle\Menu\Menu';
             }
             
-            $this->menus[$name] = new $menuClass($itemData, $this->getContainer());
+            $this->menus[$name] = new $menuClass($itemData, $this->getContainer(), $this->itemClassAliases);
         }
     }
     

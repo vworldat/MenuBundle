@@ -23,6 +23,7 @@ class c33sMenuExtension extends Extension
         $config = $this->processConfiguration($configuration, $configs);
         
         $container->setParameter('c33s_menu.definitions', $config['definitions']);
+        $container->setParameter('c33s_menu.item_class_aliases', $config['item_class_aliases']);
         
         $loader = new Loader\XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.xml');

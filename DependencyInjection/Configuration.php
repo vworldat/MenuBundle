@@ -22,10 +22,13 @@ class Configuration implements ConfigurationInterface
         
         $rootNode
             ->children()
-                ->scalarNode('default_item_class')
-                    ->defaultValue('\c33s\MenuBundle\Item\MenuItem')
-                    ->info('Default class used to generate menu items')
+                ->arrayNode('item_class_aliases')
+                    ->useAttributeAsKey('alias')
+                    ->prototype('scalar')
+                        ->isRequired()
+                    ->end()
                 ->end()
+                
                 ->variableNode('definitions')
                 ->end()
             ->end()

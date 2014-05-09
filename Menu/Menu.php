@@ -20,6 +20,10 @@ class Menu
     
     protected $defaults;
     
+    protected $itemClassAliases;
+    
+    protected $checkedClasses = array();
+    
     /**
      * The base item of the given menu. It will not appear anywhere, it's just there
      * to hold the other items.
@@ -28,10 +32,11 @@ class Menu
      */
     protected $baseItem;
     
-    public function __construct(array $itemData, ContainerInterface $container)
+    public function __construct(array $itemData, ContainerInterface $container, array $itemClassAliases = array())
     {
         $this->container = $container;
         $this->itemData = $this->fetchDefaults($itemData);
+        $this->itemClassAliases = $itemClassAliases;
         
         $this->configure();
         $this->initialize();
@@ -120,16 +125,21 @@ class Menu
     {
         if (isset($itemOptions['item_class']))
         {
-            if (!$this->hasParentClass($itemOptions['item_class'], 'c33s\MenuBundle\Item\MenuItem'))
-            {
-                throw new NoMenuItemClassException(sprintf('Item class %s does not extend \c33s\MenuBundle\Item\MenuItem', $itemOptions['item_class']));
-            }
-            
             $class = $itemOptions['item_class'];
         }
         else
         {
             $class = $this->getDefaultItemClass();
+        }
+        
+        if (isset($this->itemClassAliases[$class]))
+        {
+            $class = $this->itemClassAliases[$class];
+        }
+        
+        if (!$this->isValidMenuItemClass($class))
+        {
+            throw new NoMenuItemClassException(sprintf('Item class %s does not extend \c33s\MenuBundle\Item\MenuItem', $itemOptions['item_class']));
         }
         
         $item = new $class($itemRouteName, $itemOptions, $this);
@@ -161,6 +171,23 @@ class Menu
     public function getAllItems()
     {
         return $this->getBaseItem()->getChildren();
+    }
+    
+    /**
+     * Check if the given class is a valid MenuItem class.
+     *
+     * @param string $className
+     *
+     * @return boolean
+     */
+    protected function isValidMenuItemClass($className)
+    {
+        if (!isset($this->checkedClasses[$className]))
+        {
+            $this->checkedClasses[$className] = $this->hasParentClass($className, 'c33s\MenuBundle\Item\MenuItem');
+        }
+        
+        return $this->checkedClasses[$className];
     }
     
     /**

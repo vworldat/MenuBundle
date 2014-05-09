@@ -187,6 +187,11 @@ class MenuItem implements ContainerAwareInterface
     protected $submenuTemplate = null;
     
     /**
+     * @var unknown
+     */
+    protected $customRouteName;
+    
+    /**
      *
      * @var mixed
      */
@@ -216,6 +221,8 @@ class MenuItem implements ContainerAwareInterface
      * * visible_if_disabled        If set to false, the item will be hidden from
      *                              rendering when not enabled.
      * * alias_route_names          Provide alias route names for the current route
+     * * custom_route_name          If you cannot inject the route name via yml key, you can override it
+     *                              using custom_route_name.
      *                              name to mark the item as "current".
      * * require_route_name         If this option is set, the item will be disabled
      *                              if the current route name does not match the
@@ -308,6 +315,7 @@ class MenuItem implements ContainerAwareInterface
     {
         $this
             ->fetchItemVariants()
+            ->fetchCustomRouteName()
             ->fetchDefaultOptions()
             ->fetchTitle()
             ->fetchVisible()
@@ -548,6 +556,25 @@ class MenuItem implements ContainerAwareInterface
     protected function getRouteName()
     {
         return $this->routeName;
+    }
+    
+    /**
+     * Fetch the item's "custom_route_name" option.
+     *
+     * @return MenuItem
+     */
+    protected function fetchCustomRouteName()
+    {
+        $this
+            ->fetchOption('customRouteName')
+        ;
+        
+        if (null !== $this->customRouteName)
+        {
+            $this->routeName = $this->customRouteName;
+        }
+        
+        return $this;
     }
     
     /**
