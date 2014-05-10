@@ -20,6 +20,7 @@ class c33sMenuExtension extends Extension
     public function load(array $configs, ContainerBuilder $container)
     {
         $configuration = new Configuration();
+        $configs = $this->mergeConfigs($configs);
         $config = $this->processConfiguration($configuration, $configs);
         
         $container->setParameter('c33s_menu.definitions', $config['definitions']);
@@ -27,5 +28,20 @@ class c33sMenuExtension extends Extension
         
         $loader = new Loader\XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.xml');
+    }
+    
+    /**
+     * merges muliple configs without loosing keys
+     */
+    protected function mergeConfigs(array $configs)
+    {
+        $mergedConfig = array();
+        
+        foreach($configs as $config)
+        {
+            $mergedConfig = array_merge_recursive($flatConfig,$config);
+        }
+        
+        return  array($mergedConfig);	
     }
 }
