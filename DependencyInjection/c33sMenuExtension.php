@@ -39,9 +39,9 @@ class c33sMenuExtension extends Extension
         
         foreach($configs as $config)
         {
-            $mergedConfig = array_merge_recursive($flatConfig,$config);
+            $mergedConfig = array_merge_recursive($mergedConfig, $config);
         }
         
-        return  array($mergedConfig);	
+        return  array($mergedConfig);
     }
 }
