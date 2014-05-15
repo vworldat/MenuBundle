@@ -1105,6 +1105,21 @@ class MenuItem implements ContainerAwareInterface
      */
     protected function getCustomUrl(array $urlParameters = array())
     {
+        $urlParameters = $this->addRequestVariablesToUrlParameters($urlParameters);
+        
+        if ($this->customUrl && count($urlParameters) > 0)
+        {
+            $params = http_build_query($urlParameters);
+            
+            if ('' != parse_url($this->customUrl, PHP_URL_QUERY))
+            {
+                // existing query string, append
+                return $this->customUrl.'&'.$params;
+            }
+            
+            return $this->customUrl.'?'.$params;
+        }
+        
         return $this->customUrl;
     }
     
@@ -1320,7 +1335,7 @@ class MenuItem implements ContainerAwareInterface
             return true;
         }
         
-        return $this->getSecurityContext()->isGranted($this->requireRole);
+        return $this->isSecurityGranted($this->requireRole);
     }
     
     /**
@@ -1466,6 +1481,24 @@ class MenuItem implements ContainerAwareInterface
     protected function getSecurityContext()
     {
         return $this->getContainer()->get('security.context');
+    }
+    
+    /**
+     * Check if the current security context contains the role. Checks for a NULL token first to avaid exception.
+     *
+     * @param mixed $attributes
+     * @param mixed $object
+     *
+     * @return boolean
+     */
+    protected function isSecurityGranted($attributes, $object = null)
+    {
+        if (null === $this->getSecurityContext()->getToken())
+        {
+            return false;
+        }
+        
+        return $this->getSecurityContext()->isGranted($attributes, $object);
     }
     
     /**
