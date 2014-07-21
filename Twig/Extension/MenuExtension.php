@@ -24,8 +24,8 @@ class MenuExtension extends \Twig_Extension
     public function getFunctions()
     {
         return array(
-            'menu'          => new \Twig_Function_Method($this, 'renderMenu'),
-            'menu_items'    => new \Twig_Function_Method($this, 'getAllMenuItems'),
+            'menu_items'        => new \Twig_Function_Method($this, 'getAllMenuItems'),
+            'breadcrumb_items'  => new \Twig_Function_Method($this, 'getBreadcrumbMenuItems'),
         );
     }
     
@@ -34,38 +34,9 @@ class MenuExtension extends \Twig_Extension
         return $this->getMenuBuilder()->getMenu($menuName)->getAllItems();
     }
     
-    /**
-     * Render the menu with the given name.
-     *
-     * @param string $name
-     *
-     * @return string
-     */
-    public function renderMenu($name = 'default')
+    public function getBreadcrumbMenuItems($menuName = 'default')
     {
-        return 'abc';
-//         $menu = $this->container->get('c33s_menu');
-    
-//         $router = $this->container->get('router');
-//         $request = $this->container->get('request');
-//         $route = $request->get('_route');
-    
-//         $content = '';
-    
-//         foreach ($menu->getItems() as $itemRoute => $item)
-//         {
-//             $url = $router->generate($itemRoute);
-//             if ($itemRoute == $route)
-//             {
-//                 $content .= '<li class="active"><a href="'.$url.'">'.$item['title'].'</a></li>';
-//             }
-//             else
-//             {
-//                 $content .= '<li><a href="'.$url.'">'.$item['title'].'</a></li>';
-//             }
-//         }
-    
-//         return $content;
+        return $this->getMenuBuilder()->getMenu($menuName)->getBreadcrumbItems();
     }
     
     public function getName()

@@ -174,6 +174,51 @@ class Menu
     }
     
     /**
+     * Get all items on the current item's path, starting with the lowest. Useful for breadcrumb rendering.
+     * 
+     * @return array
+     */
+    public function getBreadcrumbItems()
+    {
+        $item = $this->getBaseItem();
+        $items = array();
+        
+        while ($current = $item->getCurrentChild())
+        {
+            $items[] = $current;
+            
+            $item = $current;
+        }
+        
+        return $items;
+    }
+    
+    /**
+     * Fetch the current MenuItem (end point in the menu selection).
+     * 
+     * @return MenuItem|NULL
+     */
+    public function getCurrentItem()
+    {
+        $item = $this->getBaseItem();
+        
+        $found = false;
+        while ($current = $item->getCurrentChild())
+        {
+            $found = true;
+            
+            $item = $current;
+        }
+        
+        if ($found)
+        {
+            return $item;
+        }
+        
+        return null;
+    }
+    
+    /**
      * Check if the given class is a valid MenuItem class.
      *
      * @param string $className

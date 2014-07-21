@@ -197,6 +197,20 @@ class MenuItem implements ContainerAwareInterface
      */
     protected $customObject;
     
+    /**
+     * Variable to store isCurrent() information once it has been determined.
+     * 
+     * @var boolean
+     */
+    protected $isCurrent;
+
+    /**
+     * Variable to store isCurrentAnchestor() information once it has been determined.
+     * 
+     * @var boolean
+     */
+    protected $isCurrentAnchestor;
+    
     protected $propelClassName = null;
     protected $propelQueryMethods = array();
     protected $propelChildRouteParameters = array('id');
@@ -1395,7 +1409,12 @@ class MenuItem implements ContainerAwareInterface
      */
     public function isCurrent()
     {
-        return $this->isMatchingRouteName() && $this->isMatchingRequestVariables();
+        if (null === $this->isCurrent)
+        {
+            $this->isCurrent = $this->isMatchingRouteName() && $this->isMatchingRequestVariables();
+        }
+        
+        return $this->isCurrent;
     }
     
     /**
@@ -1405,15 +1424,22 @@ class MenuItem implements ContainerAwareInterface
      */
     public function isCurrentAncestor()
     {
-        foreach ($this->getChildren() as $child)
+        if (null === $this->isCurrentAnchestor)
         {
-            if ($child->isOnCurrentPath())
+            $this->isCurrentAnchestor = false;
+            
+            foreach ($this->getChildren() as $child)
             {
-                return true;
+                if ($child->isOnCurrentPath())
+                {
+                    $this->isCurrentAnchestor = true;
+                    
+                    break;
+                }
             }
         }
         
-        return false;
+        return $this->isCurrentAnchestor;
     }
     
     /**
@@ -1608,5 +1634,24 @@ class MenuItem implements ContainerAwareInterface
     public function getSubmenuTemplate()
     {
         return $this->submenuTemplate;
+    }
+    
+    /**
+     * Get the child item which matches the current selection. Useful for breadcrumb rendering.
+     * 
+     * @return MenuItem
+     */
+    public function getCurrentChild()
+    {
+        foreach ($this->getChildren() as $child)
+        {
+            /* @var $child MenuItem */
+            if ($child->isOnCurrentPath())
+            {
+                return $child;
+            }
+        }
+        
+        return null;
     }
 }
