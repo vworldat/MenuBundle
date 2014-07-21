@@ -1,7 +1,8 @@
 
-{% set hasChildren = item.hasChildren() %}
-{% set isEnabled = item.isEnabled() %}
+{% set maxLevels = maxLevels|default(100) %}
 {% set level = level|default(0) %}
+{% set hasChildren = item.hasChildren() and maxLevels > (level + 1) %}
+{% set isEnabled = item.isEnabled() %}
 {% set itemClass = '' %}
 {% if hasChildren %}{% set itemClass = itemClass ~ ' dropdown-toggle' %}{% endif %}
 {% if not isEnabled %}{% set itemClass = itemClass ~ ' item-disabled' %}{% endif %}
@@ -16,5 +17,10 @@
 	        {% block item_caret %}{% if hasChildren and level == 0 %}<b class="caret"></b>{% endif %}{% endblock %}
         {% endblock %}
     {% block link_tag_close %}</a>{% endblock %}
-    {% block submenu %}{% if hasChildren %}{% include item.getSubmenuTemplate()|default("c33sMenuBundle::bootstrap_menu_renderer.html.twig") with { 'items': item.getChildren(), 'containerClass': 'dropdown-menu', 'level': (1 + level) } %}{% endif %}{% endblock %}
+    {% block submenu %}{% if hasChildren %}{% include item.getSubmenuTemplate()|default("c33sMenuBundle::bootstrap_menu_renderer.html.twig") with { 
+        'items': item.getChildren(), 
+        'containerClass': 'dropdown-menu', 
+        'level': (1 + level),
+        'maxLevels': maxLevels
+    } %}{% endif %}{% endblock %}
 {% block list_item_tag_close %}</li>{% endblock %}

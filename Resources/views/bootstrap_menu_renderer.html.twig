@@ -1,5 +1,6 @@
 
 {% set level = level|default(0) %}
+{% set maxLevels = maxLevels|default(100) %}
 {% block list_tag_open %}<ul class="{{ containerClass|default('nav navbar-nav') }}">{% endblock %}
 
 {% block items %}
@@ -10,7 +11,7 @@
             {% elseif item.isSectionHeader() %}
                 {% block item_is_header %}<li class="dropdown-header">{{ item.getTitle() }}</li>{% endblock %}
             {% else %}
-               {% block item_include %}{% include item.getItemTemplate()|default("c33sMenuBundle::bootstrap_item_renderer.html.twig") with { 'level': level } %}{% endblock %}
+               {% block item_include %}{% include item.getItemTemplate()|default("c33sMenuBundle::bootstrap_item_renderer.html.twig") with { 'level': level, 'maxLevels': maxLevels } %}{% endblock %}
             {% endif %}
         {% endblock %}
     {% endfor %}
