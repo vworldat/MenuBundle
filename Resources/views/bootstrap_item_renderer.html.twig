@@ -7,7 +7,7 @@
 {% if hasChildren %}{% set itemClass = itemClass ~ ' dropdown-toggle' %}{% endif %}
 {% if not isEnabled %}{% set itemClass = itemClass ~ ' item-disabled' %}{% endif %}
 
-{% block list_item_tag_open %}<li class="{% if item.isOnCurrentPath() %}active{% endif %} {% if item.isCurrentAncestor() %}active-inner{% endif %} {% if hasChildren and level > 0 %}dropdown-submenu{% endif %}">{% endblock %}
+{% block list_item_tag_open %}<li class="{% if item.isOnCurrentPath() %}active{% endif %} {% if item.isCurrentAncestor() %}active-inner{% endif %} {% if hasChildren and level > 0 %}dropdown-submenu{% endif %} {% block list_item_extra_classes %}{% endblock %}">{% endblock %}
     {% block link_tag_open %}<a href="{{ isEnabled ? item.getUrl() : '#' }}" class="{{ itemClass }}" {% if hasChildren %}data-toggle="dropdown"{% endif %}>{% endblock %}
         {% block item_data %}
 	        {% block item_bootstrap_icon %}{% if item.hasBootstrapIcon() %}<i class="{{ item.getBootstrapIcon() }}"></i> {% endif %}{% endblock %}
