@@ -11,7 +11,7 @@
             {% elseif item.isSectionHeader() %}
                 {% block item_is_header %}<li class="dropdown-header">{{ item.getTitle() }}</li>{% endblock %}
             {% else %}
-               {% block item_include %}{% include item.getItemTemplate()|default("c33sMenuBundle::bootstrap_item_renderer.html.twig") with { 'level': level, 'maxLevels': maxLevels } %}{% endblock %}
+               {% block item_include %}{% include item.getItemTemplate()|default("C33sMenuBundle::bootstrap_item_renderer.html.twig") with { 'level': level, 'maxLevels': maxLevels } %}{% endblock %}
             {% endif %}
         {% endblock %}
     {% endfor %}

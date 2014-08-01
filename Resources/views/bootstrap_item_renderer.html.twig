@@ -17,7 +17,7 @@
 	        {% block item_caret %}{% if hasChildren and level == 0 %}<b class="caret"></b>{% endif %}{% endblock %}
         {% endblock %}
     {% block link_tag_close %}</a>{% endblock %}
-    {% block submenu %}{% if hasChildren %}{% include item.getSubmenuTemplate()|default("c33sMenuBundle::bootstrap_menu_renderer.html.twig") with { 
+    {% block submenu %}{% if hasChildren %}{% include item.getSubmenuTemplate()|default("C33sMenuBundle::bootstrap_menu_renderer.html.twig") with { 
         'items': item.getChildren(), 
         'containerClass': 'dropdown-menu', 
         'level': (1 + level),
