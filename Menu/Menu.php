@@ -1,9 +1,9 @@
 <?php
 
-namespace c33s\MenuBundle\Menu;
+namespace C33s\MenuBundle\Menu;
 
-use c33s\MenuBundle\Exception\NoMenuItemClassException;
-use c33s\MenuBundle\Item\MenuItem;
+use C33s\MenuBundle\Exception\NoMenuItemClassException;
+use C33s\MenuBundle\Item\MenuItem;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class Menu
@@ -80,7 +80,7 @@ class Menu
      */
     protected function getDefaultItemClass()
     {
-        return 'c33s\MenuBundle\Item\MenuItem';
+        return 'C33s\MenuBundle\Item\MenuItem';
     }
     
     /**
@@ -107,7 +107,7 @@ class Menu
         
         $this->baseItem = $this->createItem('', array(
             'title' => '',
-            'item_class' => 'c33s\MenuBundle\Item\MenuItem',
+            'item_class' => 'C33s\MenuBundle\Item\MenuItem',
             'children' => $itemsMerged,
         ));
     }
@@ -139,7 +139,7 @@ class Menu
         
         if (!$this->isValidMenuItemClass($class))
         {
-            throw new NoMenuItemClassException(sprintf('Item class %s does not extend \c33s\MenuBundle\Item\MenuItem', $itemOptions['item_class']));
+            throw new NoMenuItemClassException(sprintf('Item class %s does not extend \C33s\MenuBundle\Item\MenuItem', $itemOptions['item_class']));
         }
         
         $item = new $class($itemRouteName, $itemOptions, $this);
@@ -229,7 +229,7 @@ class Menu
     {
         if (!isset($this->checkedClasses[$className]))
         {
-            $this->checkedClasses[$className] = $this->hasParentClass($className, 'c33s\MenuBundle\Item\MenuItem');
+            $this->checkedClasses[$className] = $this->hasParentClass($className, 'C33s\MenuBundle\Item\MenuItem');
         }
         
         return $this->checkedClasses[$className];

@@ -5,8 +5,8 @@
     xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     
     <parameters>
-        <parameter key="c33s_menu.builder.class">c33s\MenuBundle\Builder\MenuBuilder</parameter>
-        <parameter key="c33s_menu.twig.extension.class">c33s\MenuBundle\Twig\Extension\MenuExtension</parameter>
+        <parameter key="c33s_menu.builder.class">C33s\MenuBundle\Builder\MenuBuilder</parameter>
+        <parameter key="c33s_menu.twig.extension.class">C33s\MenuBundle\Twig\Extension\MenuExtension</parameter>
     </parameters>
     
     <services>

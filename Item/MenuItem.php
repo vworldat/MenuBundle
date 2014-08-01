@@ -1,16 +1,16 @@
 <?php
 
-namespace c33s\MenuBundle\Item;
+namespace C33s\MenuBundle\Item;
 
-use c33s\MenuBundle\Exception\OptionRequiredException;
-use c33s\MenuBundle\Menu\Menu;
+use C33s\MenuBundle\Exception\OptionRequiredException;
+use C33s\MenuBundle\Menu\Menu;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\SecurityContextInterface;
-use c33s\MenuBundle\Exception\InvalidConfigException;
+use C33s\MenuBundle\Exception\InvalidConfigException;
 use Symfony\Component\PropertyAccess\PropertyPath;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 
@@ -266,7 +266,7 @@ class MenuItem implements ContainerAwareInterface
      * * lock_icon                  (bootstrap) icon class name to display next to disabled items
      *                              due to missing role. Defaults to font-awesome 4.x "fa fa-lock"
      * * item_class                 Specify a custom item class (full namespace).
-     *                              The class must extend \c33s\MenuBundle\Item\MenuItem.
+     *                              The class must extend \C33s\MenuBundle\Item\MenuItem.
      * * children                   The definition of child items as associative
      *                              array pointing routeNames to item options.
      * * is_divider                 Set to true to display this item as divider

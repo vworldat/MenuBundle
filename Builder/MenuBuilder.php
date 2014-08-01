@@ -1,9 +1,9 @@
 <?php
 
-namespace c33s\MenuBundle\Builder;
+namespace C33s\MenuBundle\Builder;
 
-use c33s\MenuBundle\Exception\MenuDoesNotExistException;
-use c33s\MenuBundle\Menu\Menu;
+use C33s\MenuBundle\Exception\MenuDoesNotExistException;
+use C33s\MenuBundle\Menu\Menu;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class MenuBuilder
@@ -48,7 +48,7 @@ class MenuBuilder
             }
             else
             {
-                $menuClass = 'c33s\MenuBundle\Menu\Menu';
+                $menuClass = 'C33s\MenuBundle\Menu\Menu';
             }
             
             $this->menus[$name] = new $menuClass($itemData, $this->getContainer(), $this->itemClassAliases);

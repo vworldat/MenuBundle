@@ -1,6 +1,6 @@
 <?php
 
-namespace c33s\MenuBundle;
+namespace C33s\MenuBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 

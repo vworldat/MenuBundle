@@ -1,6 +1,6 @@
 <?php
 
-namespace c33s\MenuBundle\Exception;
+namespace C33s\MenuBundle\Exception;
 
 class MenuException extends \Exception
 {

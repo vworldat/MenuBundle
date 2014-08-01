@@ -1,8 +1,8 @@
 <?php
 
-namespace c33s\MenuBundle\Twig\Extension;
+namespace C33s\MenuBundle\Twig\Extension;
 
-use c33s\MenuBundle\Builder\MenuBuilder;
+use C33s\MenuBundle\Builder\MenuBuilder;
 
 class MenuExtension extends \Twig_Extension
 {

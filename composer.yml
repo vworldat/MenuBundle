@@ -9,9 +9,8 @@ authors:
     email:      office@web-emerge.com
     homepage:   'http://web-emerge.com/'
 autoload:
-    psr-0:
-        'c33s\MenuBundle': ''
-target-dir: "c33s/MenuBundle"
+    psr-4:
+        'C33s\MenuBundle\': ''
 minimum-stability: stable
 require:
     php: '>=5.3.3'

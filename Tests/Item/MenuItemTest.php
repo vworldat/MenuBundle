@@ -1,8 +1,8 @@
 <?php
 
-namespace c33s\MenuBundle\Item\Test;
+namespace C33s\MenuBundle\Item\Test;
 
-use c33s\MenuBundle\Item\MenuItem;
+use C33s\MenuBundle\Item\MenuItem;
 
 /**
  * MenuItemTest.

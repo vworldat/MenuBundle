@@ -1,8 +1,8 @@
 <?php
 
-namespace c33s\MenuBundle\Item;
+namespace C33s\MenuBundle\Item;
 
-use c33s\MenuBundle\Exception\MenuException;
+use C33s\MenuBundle\Exception\MenuException;
 
 /**
  * @author david

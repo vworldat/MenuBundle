@@ -1,8 +1,8 @@
 <?php
 
-namespace c33s\MenuBundle\Exception;
+namespace C33s\MenuBundle\Exception;
 
-use c33s\MenuBundle\Exception\MenuException;
+use C33s\MenuBundle\Exception\MenuException;
 
 class MenuDoesNotExistException extends MenuException
 {

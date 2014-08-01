@@ -1,9 +1,9 @@
 <?php
 
-namespace c33s\MenuBundle\Item;
+namespace C33s\MenuBundle\Item;
 
-use c33s\MenuBundle\Menu\Menu;
-use c33s\MenuBundle\Exception\OptionRequiredException;
+use C33s\MenuBundle\Menu\Menu;
+use C33s\MenuBundle\Exception\OptionRequiredException;
 
 /**
  * @author david
