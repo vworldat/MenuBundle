@@ -22,7 +22,7 @@ class MenuItemTest extends \PHPUnit_Framework_TestCase
      */
     protected function setUp()
     {
-        $menu = $this->getMockBuilder('c33s\\MenuBundle\\Menu\\Menu')->disableOriginalConstructor()->getMock();
+        $menu = $this->getMockBuilder('C33s\\MenuBundle\\Menu\\Menu')->disableOriginalConstructor()->getMock();
         $this->SUT = new MenuItem('/route', array('title' => 'Route'), $menu);
     }
 

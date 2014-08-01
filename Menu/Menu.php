@@ -12,18 +12,18 @@ class Menu
      * @var array
      */
     protected $itemData;
-    
+
     /**
      * @var ContainerInterface $container
      */
     protected $container;
-    
+
     protected $defaults;
-    
+
     protected $itemClassAliases;
-    
+
     protected $checkedClasses = array();
-    
+
     /**
      * The base item of the given menu. It will not appear anywhere, it's just there
      * to hold the other items.
@@ -31,17 +31,17 @@ class Menu
      * @var MenuItem
      */
     protected $baseItem;
-    
+
     public function __construct(array $itemData, ContainerInterface $container, array $itemClassAliases = array())
     {
         $this->container = $container;
         $this->itemData = $this->fetchDefaults($itemData);
         $this->itemClassAliases = $itemClassAliases;
-        
+
         $this->configure();
         $this->initialize();
     }
-    
+
     protected function fetchDefaults(array $itemData)
     {
         if (array_key_exists('.defaults', $itemData))
@@ -54,25 +54,25 @@ class Menu
         {
             $defaults = array();
         }
-        
+
         if (!array_key_exists('item_class', $defaults))
         {
             $defaults['item_class'] = $this->getDefaultItemClass();
         }
-        
+
         $this->defaults = $defaults;
-        
+
         return $itemData;
     }
-    
+
     /**
      * This is executed before initialize(). Put awesome stuff here.
      */
     protected function configure()
     {
-        
+
     }
-    
+
     /**
      * Get the default class name to use for first-level items.
      *
@@ -82,19 +82,19 @@ class Menu
     {
         return 'C33s\MenuBundle\Item\MenuItem';
     }
-    
+
     /**
      * Initialize base menu item and its children
      */
     protected function initialize()
     {
         $itemData = $this->getItemData();
-        
+
         $itemsMerged = array();
         foreach ($itemData as $key => $itemOptions)
         {
             $itemsMerged[$key] = array_merge($this->defaults, $itemOptions);
-            
+
             if (isset($itemsMerged[$key]['children']['.defaults']))
             {
                 $itemsMerged[$key]['children']['.defaults'] = array_merge($this->defaults, $itemsMerged[$key]['children']['.defaults']);
@@ -104,14 +104,14 @@ class Menu
                 $itemsMerged[$key]['children']['.defaults'] = $this->defaults;
             }
         }
-        
+
         $this->baseItem = $this->createItem('', array(
             'title' => '',
             'item_class' => 'C33s\MenuBundle\Item\MenuItem',
             'children' => $itemsMerged,
         ));
     }
-    
+
     /**
      * MenuItem factory method.
      *
@@ -131,32 +131,32 @@ class Menu
         {
             $class = $this->getDefaultItemClass();
         }
-        
+
         if (isset($this->itemClassAliases[$class]))
         {
             $class = $this->itemClassAliases[$class];
         }
-        
+
         if (!$this->isValidMenuItemClass($class))
         {
             throw new NoMenuItemClassException(sprintf('Item class %s does not extend \C33s\MenuBundle\Item\MenuItem', $itemOptions['item_class']));
         }
-        
+
         $item = new $class($itemRouteName, $itemOptions, $this);
-        
+
         return $item;
     }
-    
+
     public function getItemData()
     {
         return $this->itemData;
     }
-    
+
     public function getContainer()
     {
         return $this->container;
     }
-    
+
     /**
      * @return MenuItem
      */
@@ -164,7 +164,7 @@ class Menu
     {
         return $this->baseItem;
     }
-    
+
     /**
      * @return array
      */
@@ -172,52 +172,52 @@ class Menu
     {
         return $this->getBaseItem()->getChildren();
     }
-    
+
     /**
      * Get all items on the current item's path, starting with the lowest. Useful for breadcrumb rendering.
-     * 
+     *
      * @return array
      */
     public function getBreadcrumbItems()
     {
         $item = $this->getBaseItem();
         $items = array();
-        
+
         while ($current = $item->getCurrentChild())
         {
             $items[] = $current;
-            
+
             $item = $current;
         }
-        
+
         return $items;
     }
-    
+
     /**
      * Fetch the current MenuItem (end point in the menu selection).
-     * 
+     *
      * @return MenuItem|NULL
      */
     public function getCurrentItem()
     {
         $item = $this->getBaseItem();
-        
+
         $found = false;
         while ($current = $item->getCurrentChild())
         {
             $found = true;
-            
+
             $item = $current;
         }
-        
+
         if ($found)
         {
             return $item;
         }
-        
+
         return null;
     }
-    
+
     /**
      * Check if the given class is a valid MenuItem class.
      *
@@ -229,12 +229,12 @@ class Menu
     {
         if (!isset($this->checkedClasses[$className]))
         {
-            $this->checkedClasses[$className] = $this->hasParentClass($className, 'C33s\MenuBundle\Item\MenuItem');
+            $this->checkedClasses[$className] = $this->hasParentClass($className, 'C33s\\MenuBundle\\Item\\MenuItem');
         }
-        
+
         return $this->checkedClasses[$className];
     }
-    
+
     /**
      * Check if the given $parentName class is a parent of $class.
      *
@@ -245,7 +245,7 @@ class Menu
     {
         return $class == $parentName || array_key_exists($parentName, $this->getAncestors($class));
     }
-    
+
     /**
      * Get all ancestors of the given class name.
      *
@@ -260,7 +260,7 @@ class Menu
         {
             $classes[$class] = $class;
         }
-        
+
         return $classes;
     }
 }
