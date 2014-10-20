@@ -25,199 +25,200 @@ class MenuItem implements ContainerAwareInterface
      * @var Menu
      */
     protected $menu;
-    
+
     /**
      * @var ContainerInterface $container
      */
     protected $container;
-    
+
     /**
      * @var array
      */
     protected $options;
-    
+
     /**
      * @var string
      */
     protected $routeName;
-    
+
     /**
      * @var string
      */
     protected $anchor;
-    
+
     /**
      * @var string
      */
     protected $currentRouteName;
-    
+
     /**
      * @var Request
      */
     protected $request;
-    
+
     /**
      * @var RouterInterface
      */
     protected $router;
-    
+
     /**
      * @var array
      */
     protected $aliasRouteNames = array();
-    
+
     /**
      * @var string
      */
     protected $title;
-    
+
     /**
      * @var MenuItem
      */
     protected $parentItem = null;
-    
+
     /**
      * @var boolean
      */
     protected $visible = true;
-    
+
     /**
      * @var boolean
      */
     protected $visibleIfDisabled = false;
-    
+
     /**
      * @var string
      */
     protected $requireRouteName = null;
-    
+
     /**
      * @var boolean
      */
     protected $invertRequireRouteName = false;
-    
+
     /**
      * @var string
      */
     protected $customUrl = null;
-    
+
     /**
      * @var array
      */
     protected $addRequestVariables = array();
-    
+
     /**
      * @var array
      */
     protected $setRequestVariables = array();
-    
+
     /**
      * @var array
      */
     protected $matchRequestVariables = array();
-    
+
     /**
      * @var string
      */
     protected $url;
-    
+
     /**
      * @var array
      */
     protected $children = array();
-    
+
     /**
      * @var boolean
      */
     protected $isDivider = false;
-    
+
     /**
      *
      * @var string
      */
     protected $isSectionHeader = false;
-    
+
     /**
      * Symfony security role required to enable this MenuItem
      *
      * @var string
      */
     protected $requireRole = null;
-    
+
     /**
      * @var boolean
      */
     protected $enabledIfRoleMissing = false;
-    
+
     /**
      * Name of bootstrap icon to use.
      *
      * @var string
      */
     protected $bootstrapIcon = null;
-    
+
     /**
      * (bootstrap) icon class name to display next to disabled items due to missing role.
      *
      * @var string
      */
     protected $lockIcon = 'fa fa-lock';
-    
+
     /**
      *
      * @var string
      */
     protected $customUrlIcon = 'fa fa-external-link';
-    
+
     /**
      * Provides default option values for all child items of this item. These will be assigned recursively.
      *
      * @var array
      */
     protected $defaultOptions = array();
-    
+
     /**
      * @var string
      */
     protected $itemTemplate = null;
-    
+
     /**
      * @var string
      */
     protected $submenuTemplate = null;
-    
+
     /**
      * @var unknown
      */
     protected $customRouteName;
-    
+
     /**
      *
      * @var mixed
      */
     protected $customObject;
-    
+
     /**
      * Variable to store isCurrent() information once it has been determined.
-     * 
+     *
      * @var boolean
      */
     protected $isCurrent;
 
     /**
      * Variable to store isCurrentAnchestor() information once it has been determined.
-     * 
+     *
      * @var boolean
      */
     protected $isCurrentAnchestor;
-    
+
     protected $propelClassName = null;
     protected $propelQueryMethods = array();
     protected $propelChildRouteParameters = array('id');
     protected $propelChildRoute = null;
     protected $propelChildOptions = array();
     protected $propelTitleField = null;
-    
+    protected $propelInsertAt = 'after';
+
     /**
      * Construct a new menu item. It requires its routeName, options and
      * the menu the item is assigned to.
@@ -286,6 +287,7 @@ class MenuItem implements ContainerAwareInterface
      *                              as route parameters / request variables. Defaults to [ id ]
      *       child_options          Additional menu item options only to use for the generated children, such as item_class
      *       title_field            Field to use for children titles. If not set, a __toString() cast will be used.
+     *       insert_at:             Where to insert the propel children (before/after). Defaults to "after"
      *
      * * custom_object              Provide custom object that availably inside the menu item
      *
@@ -303,12 +305,12 @@ class MenuItem implements ContainerAwareInterface
             ->setRouteName($routeName)
             ->setOptions($this->prepareOptions($options))
         ;
-        
+
         $this->initOptions();
         $this->configure();
         $this->generateChildren();
     }
-    
+
     /**
      * Override this method to modify the raw options array before it is used.
      * Only do this if you know what you are doing!
@@ -321,7 +323,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $options;
     }
-    
+
     /**
      * Initialize the item's option values.
      */
@@ -348,7 +350,7 @@ class MenuItem implements ContainerAwareInterface
             ->fetchCustomObject()
         ;
     }
-    
+
     /**
      * Override this method to provide additional configuration in your custom
      * implementation. This is called before the item's children are generated.
@@ -357,7 +359,7 @@ class MenuItem implements ContainerAwareInterface
     {
         // additional configuration goes here
     }
-    
+
     protected function fetchDefaultOptions()
     {
         if (isset($this->options['children']['.defaults']))
@@ -365,10 +367,10 @@ class MenuItem implements ContainerAwareInterface
             $this->defaultOptions = (array) $this->options['children']['.defaults'];
             unset($this->options['children']['.defaults']);
         }
-        
+
         return $this;
     }
-    
+
     /**
      * Generate child items based on the passed options.
      */
@@ -378,17 +380,25 @@ class MenuItem implements ContainerAwareInterface
         {
             return;
         }
-        
+
         $this->insertCopyToChildren();
-        
+
+        if ('before' == $this->propelInsertAt)
+        {
+            $this->generatePropelChildren();
+        }
+
         foreach ($this->getOption('children') as $routeName => $options)
         {
             $this->addChildByData($routeName, $options);
         }
-        
-        $this->generatePropelChildren();
+
+        if ('after' == $this->propelInsertAt)
+        {
+            $this->generatePropelChildren();
+        }
     }
-    
+
     /**
      * If the item is configured to insert itself as its first child, this will be done here.
      */
@@ -400,11 +410,11 @@ class MenuItem implements ContainerAwareInterface
             $options['children'] = array();
             $options['copy_to_children'] = false;
             $options['title'] = $this->getOption('copy_to_children_title', $this->getTitle());
-            
+
             $this->addChildByData($this->getRouteName(), $options);
         }
     }
-    
+
     /**
      * Add a child to the menu using item data.
      *
@@ -430,13 +440,13 @@ class MenuItem implements ContainerAwareInterface
         {
             $options['children']['.defaults'] = $this->defaultOptions;
         }
-        
+
         $options = array_merge($this->defaultOptions, $options);
         $item = $this->getMenu()->createItem($routeName, $options);
-        
+
         return $this->addChild($item, $position);
     }
-    
+
     /**
      * Add a child item to the menu at the given position.
      *
@@ -465,12 +475,12 @@ class MenuItem implements ContainerAwareInterface
         {
             $this->children[] = $item;
         }
-        
+
         $item->setParentItem($this);
-        
+
         return $item;
     }
-    
+
     /**
      * Add an item next to this menu item.
      *
@@ -482,10 +492,10 @@ class MenuItem implements ContainerAwareInterface
     public function addSiblingByData($routeName, array $options)
     {
         $item = $this->getMenu()->createItem($routeName, $itemData);
-        
+
         return $this->getParent()->addChild($item, $this->getItemPosition() + 1);
     }
-    
+
     /**
      * Get the item's child items.
      *
@@ -495,7 +505,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->children;
     }
-    
+
     /**
      * Check if the menu item has any children.
      *
@@ -505,7 +515,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return count($this->getChildren()) > 0;
     }
-    
+
     /**
      * Check if the menu item has any children that are enabled.
      *
@@ -520,10 +530,10 @@ class MenuItem implements ContainerAwareInterface
                 return true;
             }
         }
-        
+
         return false;
     }
-    
+
     /**
      * Assign a menu to this item
      *
@@ -534,10 +544,10 @@ class MenuItem implements ContainerAwareInterface
     protected function setMenu(Menu $menu)
     {
         $this->menu = $menu;
-        
+
         return $this;
     }
-    
+
     /**
      * Get the assigned menu
      *
@@ -547,7 +557,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->menu;
     }
-    
+
     /**
      * Set this menu item's route name.
      *
@@ -558,10 +568,10 @@ class MenuItem implements ContainerAwareInterface
     protected function setRouteName($routeName)
     {
         $this->routeName = $routeName;
-        
+
         return $this;
     }
-    
+
     /**
      * Get the item's route name.
      *
@@ -571,7 +581,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->routeName;
     }
-    
+
     /**
      * Fetch the item's "custom_route_name" option.
      *
@@ -582,15 +592,15 @@ class MenuItem implements ContainerAwareInterface
         $this
             ->fetchOption('customRouteName')
         ;
-        
+
         if (null !== $this->customRouteName)
         {
             $this->routeName = $this->customRouteName;
         }
-        
+
         return $this;
     }
-    
+
     /**
      * Add 1 or more alias routes, passing either a route name
      * or an array of route names.
@@ -607,10 +617,10 @@ class MenuItem implements ContainerAwareInterface
             $aliasRoute = (string) $aliasRoute;
             $this->aliasRouteNames[$aliasRoute] = $aliasRoute;
         }
-        
+
         return $this;
     }
-    
+
     /**
      * Set the DI container.
      *
@@ -621,10 +631,10 @@ class MenuItem implements ContainerAwareInterface
     public function setContainer(ContainerInterface $container = null)
     {
         $this->container = $container;
-        
+
         return $this;
     }
-    
+
     /**
      * Get the DI container
      *
@@ -634,7 +644,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->container;
     }
-    
+
     /**
      * Set a parent menu item.
      *
@@ -645,10 +655,10 @@ class MenuItem implements ContainerAwareInterface
     public function setParentItem(MenuItem $parentItem)
     {
         $this->parentItem = $parentItem;
-        
+
         return $this;
     }
-    
+
     /**
      * Get this item's parent item.
      *
@@ -658,7 +668,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->parentItem;
     }
-    
+
     /**
      * Check if the item has a parent item.
      *
@@ -668,7 +678,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return null !== $this->parentItem;
     }
-    
+
     /**
      * Fetch the item's "title" option.
      *
@@ -680,7 +690,7 @@ class MenuItem implements ContainerAwareInterface
             ->fetchOption('title', true)
         ;
     }
-    
+
     /**
      * Get the item's title.
      *
@@ -690,7 +700,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->title;
     }
-    
+
     /**
      * Get the item's title, html-safe
      *
@@ -700,7 +710,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return htmlspecialchars($this->getTitle());
     }
-    
+
     /**
      * Fetch the item's "anchor" option.
      *
@@ -710,7 +720,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->fetchOption('anchor');
     }
-    
+
     /**
      * Get the html anchor to use with the URL.
      *
@@ -720,7 +730,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->anchor;
     }
-    
+
     /**
      * Check if the item has an anchor.
      *
@@ -730,7 +740,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return null !== $this->getAnchor();
     }
-    
+
     /**
      * Fetch the item's "bootstrap_icon" option.
      *
@@ -744,7 +754,7 @@ class MenuItem implements ContainerAwareInterface
             ->fetchOption('customUrlIcon')
         ;
     }
-    
+
     /**
      * Fetch the item's "require_role" option.
      *
@@ -757,7 +767,7 @@ class MenuItem implements ContainerAwareInterface
             ->fetchOption('enabledIfRoleMissing')
         ;
     }
-    
+
     /**
      * Fetch the item's "item_template" and "submenu_template" options.
      *
@@ -770,7 +780,7 @@ class MenuItem implements ContainerAwareInterface
             ->fetchOption('submenuTemplate')
         ;
     }
-    
+
     /**
      * Fetch the item's "custom_object" option.
      *
@@ -782,7 +792,7 @@ class MenuItem implements ContainerAwareInterface
             ->fetchOption('customObject')
         ;
     }
-    
+
     /**
      * Check if this item contains a custom object
      *
@@ -792,7 +802,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return null !== $this->customObject;
     }
-    
+
     /**
      * Get the item's custom object, whatever it is.
      *
@@ -802,7 +812,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->customObject;
     }
-    
+
     /**
      * Fetch the item's "propel" option and sub options.
      *
@@ -814,9 +824,9 @@ class MenuItem implements ContainerAwareInterface
         {
             return $this;
         }
-        
+
         $config = $this->getOption('propel');
-        
+
         if (!isset($config['class_name']))
         {
             throw new OptionRequiredException('Propel menu item requires "propel/class_name" config value in menu config');
@@ -830,13 +840,13 @@ class MenuItem implements ContainerAwareInterface
             throw new InvalidConfigException('Invalid propel class name. Class does not implement \Persistent interface: ' . $config['class_name']);
         }
         $this->propelClassName = $config['class_name'];
-        
+
         if (!isset($config['child_route']))
         {
             throw new OptionRequiredException('Propel menu item requires "propel/child_route" config value in menu config');
         }
         $this->propelChildRoute = $config['child_route'];
-        
+
         if (isset($config['child_route_parameters']))
         {
             $this->propelChildRouteParameters = (array) $config['child_route_parameters'];
@@ -849,7 +859,11 @@ class MenuItem implements ContainerAwareInterface
         {
             $this->propelTitleField = $config['title_field'];
         }
-        
+        if (isset($config['insert_at']))
+        {
+            $this->propelInsertAt = $config['insert_at'];
+        }
+
         if (isset($config['query_methods']) && is_array($config['query_methods']))
         {
             foreach ($config['query_methods'] as $name => $values)
@@ -857,10 +871,10 @@ class MenuItem implements ContainerAwareInterface
                 $this->propelQueryMethods[$name] = (array) $values;
             }
         }
-        
+
         return $this;
     }
-    
+
     /**
      * Generate propel children if the specific config was set.
      */
@@ -870,22 +884,22 @@ class MenuItem implements ContainerAwareInterface
         {
             return;
         }
-        
+
         $queryClass = $this->propelClassName.'Query';
         $query = $queryClass::create();
-        
+
         foreach ($this->propelQueryMethods as $method => $params)
         {
             call_user_func_array(array($query, $method), $params);
         }
-        
+
         $accessor = PropertyAccess::getPropertyAccessor();
-        
+
         $elements = $query->find();
         foreach ($elements as $element)
         {
             $options = $this->propelChildOptions;
-            
+
             if (null !== $this->propelTitleField)
             {
                 $options['title'] = $accessor->getValue($element, $this->propelTitleField);
@@ -894,25 +908,25 @@ class MenuItem implements ContainerAwareInterface
             {
                 $options['title'] = (string) $element;
             }
-            
+
             if (!isset($options['set_request_variables']))
             {
                 $options['set_request_variables'] = array();
             }
-            
+
             foreach ($this->propelChildRouteParameters as $param)
             {
                 $value = $accessor->getValue($element, $param);
                 $options['set_request_variables'][$param] = $value;
                 $options['match_request_variables'][$param] = $value;
             }
-            
+
             $options['custom_object'] = $element;
-            
+
             $this->addChildByData($this->propelChildRoute, $options);
         }
     }
-    
+
     /**
      * Get the bootstrap icon name.
      *
@@ -922,7 +936,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->bootstrapIcon;
     }
-    
+
     /**
      * Check if the item has a bootstrap icon.
      *
@@ -932,7 +946,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return null !== $this->getBootstrapIcon();
     }
-    
+
     /**
      * Check if the item has a lock icon.
      * By default this is the case if the item is disabled due to security restrictions.
@@ -945,10 +959,10 @@ class MenuItem implements ContainerAwareInterface
         {
             return false;
         }
-        
+
         return !$this->userHasRequiredRole();
     }
-    
+
     /**
      * Get the lock icon class name.
      *
@@ -958,7 +972,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->lockIcon;
     }
-    
+
     /**
      * Fetch the item's "visible" option.
      *
@@ -968,7 +982,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->fetchOption('visible');
     }
-    
+
     /**
      * Get the value of the "visible" option. Don't mix this up with
      * MenuItem::isVisible().
@@ -979,7 +993,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return (boolean) $this->visible;
     }
-    
+
     /**
      * Fetch the item's "visible_if_disabled" option.
      *
@@ -989,7 +1003,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->fetchOption('visibleIfDisabled');
     }
-    
+
     /**
      * Check for specific item variations based on the route name. This is kinda hacky but useful.
      *
@@ -1002,7 +1016,7 @@ class MenuItem implements ContainerAwareInterface
             ->fetchItemVariantHeadline()
         ;
     }
-    
+
     /**
      * If the routename start with ".divider" the item will be used as a divider.
      *
@@ -1015,10 +1029,10 @@ class MenuItem implements ContainerAwareInterface
             $this->isDivider = true;
             $this->options['title'] = 'dummy';
         }
-        
+
         return $this;
     }
-    
+
     /**
      * If the routename start with ".headline" the item will be used as a section header.
      *
@@ -1030,10 +1044,10 @@ class MenuItem implements ContainerAwareInterface
         {
             $this->isSectionHeader = true;
         }
-        
+
         return $this;
     }
-    
+
     /**
      * Check if the item should be displayed when not enabled.
      *
@@ -1043,7 +1057,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->visibleIfDisabled;
     }
-    
+
     /**
      * Fetch the item's "alias_route_names" option.
      *
@@ -1053,7 +1067,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->addAliasRoutes($this->getOption('alias_route_names', array()));
     }
-    
+
     /**
      * Get the alias route names to the item's route name.
      *
@@ -1063,7 +1077,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->aliasRouteNames;
     }
-    
+
     /**
      * Fetch the item's "require_route_name" option.
      *
@@ -1077,10 +1091,10 @@ class MenuItem implements ContainerAwareInterface
             $this->invertRequireRouteName = true;
             $this->requireRouteName = substr($this->requireRouteName, 1);
         }
-        
+
         return $this;
     }
-    
+
     /**
      * Get the name of the required route for this item to be enabled.
      *
@@ -1090,7 +1104,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->requireRouteName;
     }
-    
+
     /**
      * Check if the "require_route_name" option has to be inverted
      * (require everything but the route name).
@@ -1101,7 +1115,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->invertRequireRouteName;
     }
-    
+
     /**
      * Fetch the item's "custom_url" option.
      *
@@ -1111,7 +1125,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->fetchOption('customUrl');
     }
-    
+
     /**
      * Get the item's custom url to use instead of the routing.
      *
@@ -1120,23 +1134,23 @@ class MenuItem implements ContainerAwareInterface
     protected function getCustomUrl(array $urlParameters = array())
     {
         $urlParameters = $this->addRequestVariablesToUrlParameters($urlParameters);
-        
+
         if ($this->customUrl && count($urlParameters) > 0)
         {
             $params = http_build_query($urlParameters);
-            
+
             if ('' != parse_url($this->customUrl, PHP_URL_QUERY))
             {
                 // existing query string, append
                 return $this->customUrl.'&'.$params;
             }
-            
+
             return $this->customUrl.'?'.$params;
         }
-        
+
         return $this->customUrl;
     }
-    
+
     /**
      * Check if the item has a custom url.
      *
@@ -1146,7 +1160,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return null !== $this->customUrl;
     }
-    
+
     /**
      * Check if the item should display a custom url icon (e.g. for external links)
      *
@@ -1156,7 +1170,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return null !== $this->customUrl && '' != $this->customUrlIcon;
     }
-    
+
     /**
      * Get the icon class to display next to custom urls.
      *
@@ -1166,7 +1180,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->customUrlIcon;
     }
-    
+
     /**
      * Fetch the item's "add_request_variables" option.
      *
@@ -1176,10 +1190,10 @@ class MenuItem implements ContainerAwareInterface
     {
         $this->fetchOption('addRequestVariables');
         $this->addRequestVariables = (array) $this->addRequestVariables;
-        
+
         return $this;
     }
-    
+
     /**
      * Fetch the item's "set_request_variables" option.
      *
@@ -1189,10 +1203,10 @@ class MenuItem implements ContainerAwareInterface
     {
         $this->fetchOption('setRequestVariables');
         $this->setRequestVariables = (array) $this->setRequestVariables;
-        
+
         return $this;
     }
-    
+
     /**
      * Get the request variable names that should be added when generating
      * the item URL.
@@ -1203,7 +1217,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->addRequestVariables;
     }
-    
+
     /**
      * Get the request variable names and values to add when generating the item URL.
      *
@@ -1213,7 +1227,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->setRequestVariables;
     }
-    
+
     /**
      * Fetch the item's "add_request_variables" option.
      *
@@ -1223,10 +1237,10 @@ class MenuItem implements ContainerAwareInterface
     {
         $this->fetchOption('matchRequestVariables');
         $this->matchRequestVariables = (array) $this->matchRequestVariables;
-        
+
         return $this;
     }
-    
+
     /**
      * Get the request variable names that should be added when generating
      * the item URL.
@@ -1237,7 +1251,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->matchRequestVariables;
     }
-    
+
     /**
      * Check if the current request is matching all required vars.
      *
@@ -1252,10 +1266,10 @@ class MenuItem implements ContainerAwareInterface
                 return false;
             }
         }
-        
+
         return true;
     }
-    
+
     /**
      * Set the item's option settings.
      *
@@ -1266,10 +1280,10 @@ class MenuItem implements ContainerAwareInterface
     protected function setOptions(array $options)
     {
         $this->options = $options;
-        
+
         return $this;
     }
-    
+
     /**
      * Get the item's option settings.
      *
@@ -1279,7 +1293,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->options;
     }
-    
+
     /**
      * Check if the specific option is set in the item's option settings.
      *
@@ -1291,7 +1305,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return array_key_exists($name, $this->getOptions());
     }
-    
+
     /**
      * Get the specific option value from the item's option settings.
      *
@@ -1306,10 +1320,10 @@ class MenuItem implements ContainerAwareInterface
         {
             return $this->options[$name];
         }
-        
+
         return $default;
     }
-    
+
     /**
      * Fetch an option value from the given options array. If the specific option
      * is not set, the default value initialized in the class is used. If the
@@ -1333,10 +1347,10 @@ class MenuItem implements ContainerAwareInterface
         {
             throw new OptionRequiredException(sprintf('The menu item option %s is required', $optionName));
         }
-        
+
         return $this;
     }
-    
+
     /**
      * Check the require_role option and check with the security context if necessary.
      *
@@ -1348,10 +1362,10 @@ class MenuItem implements ContainerAwareInterface
         {
             return true;
         }
-        
+
         return $this->isSecurityGranted($this->requireRole);
     }
-    
+
     /**
      * Check if the item is visible (should be rendered) or not.
      *
@@ -1367,10 +1381,10 @@ class MenuItem implements ContainerAwareInterface
         {
             return true;
         }
-        
+
         return $this->isEnabled();
     }
-    
+
     /**
      * Check if the item should be rendered as enabled (with link)
      * or not (just title, no link).
@@ -1386,10 +1400,10 @@ class MenuItem implements ContainerAwareInterface
                 return false;
             }
         }
-        
+
         return $this->enabledIfRoleMissing || $this->userHasRequiredRole();
     }
-    
+
     /**
      * Check if the given route name is matching the request route name or alias route names
      *
@@ -1399,7 +1413,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->getCurrentRouteName() == $this->getRouteName() || array_key_exists($this->getCurrentRouteName(), $this->getAliasRouteNames());
     }
-    
+
     /**
      * Check if the item is currently selected itself. This is the case when
      * the current (request) route name matches the item route name or the
@@ -1413,10 +1427,10 @@ class MenuItem implements ContainerAwareInterface
         {
             $this->isCurrent = $this->isMatchingRouteName() && $this->isMatchingRequestVariables();
         }
-        
+
         return $this->isCurrent;
     }
-    
+
     /**
      * Check if any of the child items of the current item are currently selected.
      *
@@ -1427,21 +1441,21 @@ class MenuItem implements ContainerAwareInterface
         if (null === $this->isCurrentAnchestor)
         {
             $this->isCurrentAnchestor = false;
-            
+
             foreach ($this->getChildren() as $child)
             {
                 if ($child->isOnCurrentPath())
                 {
                     $this->isCurrentAnchestor = true;
-                    
+
                     break;
                 }
             }
         }
-        
+
         return $this->isCurrentAnchestor;
     }
-    
+
     /**
      * Check if the item is somewhere on the path of the currently selected item.
      * An item will be marked selected if it is selected itself or any child
@@ -1453,7 +1467,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->isCurrent() || $this->isCurrentAncestor();
     }
-    
+
     /**
      * Get the current route name from the request.
      *
@@ -1465,10 +1479,10 @@ class MenuItem implements ContainerAwareInterface
         {
             $this->currentRouteName = $this->getRequest()->get('_route');
         }
-        
+
         return $this->currentRouteName;
     }
-    
+
     /**
      * Fetch the request from the DI container.
      *
@@ -1480,10 +1494,10 @@ class MenuItem implements ContainerAwareInterface
         {
             $this->request = $this->getContainer()->get('request');
         }
-        
+
         return $this->request;
     }
-    
+
     /**
      * Fetch the router from the DI container.
      *
@@ -1495,10 +1509,10 @@ class MenuItem implements ContainerAwareInterface
         {
             $this->router = $this->getContainer()->get('router');
         }
-        
+
         return $this->router;
     }
-    
+
     /**
      * Get the security context
      *
@@ -1508,7 +1522,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->getContainer()->get('security.context');
     }
-    
+
     /**
      * Check if the current security context contains the role. Checks for a NULL token first to avaid exception.
      *
@@ -1523,10 +1537,10 @@ class MenuItem implements ContainerAwareInterface
         {
             return false;
         }
-        
+
         return $this->getSecurityContext()->isGranted($attributes, $object);
     }
-    
+
     /**
      * Get the url for this menu item.
      *
@@ -1536,7 +1550,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->generateUrl($urlParameters, $absolute);
     }
-    
+
     /**
      * Generate the URL for this item.
      *
@@ -1551,10 +1565,10 @@ class MenuItem implements ContainerAwareInterface
         {
             return $url;
         }
-        
+
         return $this->generateStandardUrl($urlParameters);
     }
-    
+
     /**
      * Generate a URL using the routing.
      *
@@ -1565,16 +1579,16 @@ class MenuItem implements ContainerAwareInterface
     protected function generateStandardUrl(array $urlParameters = array(), $absolute = false)
     {
         $urlParameters = $this->addRequestVariablesToUrlParameters($urlParameters);
-        
+
         $anchor = '';
         if ($this->hasAnchor())
         {
             $anchor = '#'.$this->getAnchor();
         }
-        
+
         return $this->getRouter()->generate($this->getRouteName(), $urlParameters, $absolute) . $anchor;
     }
-    
+
     /**
      * Add variable values defined in $addRequestVariables to the given
      * urlParameters. This can be used to pass through generally available
@@ -1594,10 +1608,10 @@ class MenuItem implements ContainerAwareInterface
         {
             $urlParameters[$key] = $value;
         }
-        
+
         return $urlParameters;
     }
-    
+
     /**
      * Check if this item is supposed to render as a divider.
      */
@@ -1605,7 +1619,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->isDivider;
     }
-    
+
     /**
      * Check if the item has a section header.
      *
@@ -1615,7 +1629,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->isSectionHeader;
     }
-    
+
     /**
      * Get the (twig) template name to use for rendering this item. This overrides the default in the twig renderer.
      *
@@ -1625,7 +1639,7 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->itemTemplate;
     }
-    
+
     /**
      * Get the (twig) template name to use for rendering the submenu of this item. This overrides the default in the twig renderer.
      *
@@ -1635,10 +1649,10 @@ class MenuItem implements ContainerAwareInterface
     {
         return $this->submenuTemplate;
     }
-    
+
     /**
      * Get the child item which matches the current selection. Useful for breadcrumb rendering.
-     * 
+     *
      * @return MenuItem
      */
     public function getCurrentChild()
@@ -1651,7 +1665,7 @@ class MenuItem implements ContainerAwareInterface
                 return $child;
             }
         }
-        
+
         return null;
     }
 }
