@@ -205,6 +205,12 @@ class MenuItem implements ContainerAwareInterface
     protected $isCurrent;
 
     /**
+     *
+     * @var array
+     */
+    protected $extra = array();
+
+    /**
      * Variable to store isCurrentAnchestor() information once it has been determined.
      *
      * @var boolean
@@ -276,6 +282,8 @@ class MenuItem implements ContainerAwareInterface
      * * item_template              Set a non-default (twig) template name for this item
      * * submenu_template           Set a non-default (twig) template name for this item's submenu
      *
+     * * extra                      Array holding any extra information that does not fit into existing fields
+     *
      * * propel                     Auto-generate children fetched from a propel collection
      *                              Each element will be injected into its menu item as custom_object
      *       class_name             Propel model class name to use (full namespace)
@@ -333,6 +341,7 @@ class MenuItem implements ContainerAwareInterface
             ->fetchItemVariants()
             ->fetchCustomRouteName()
             ->fetchDefaultOptions()
+            ->fetchExtra()
             ->fetchTitle()
             ->fetchVisible()
             ->fetchVisibleIfDisabled()
@@ -366,6 +375,16 @@ class MenuItem implements ContainerAwareInterface
         {
             $this->defaultOptions = (array) $this->options['children']['.defaults'];
             unset($this->options['children']['.defaults']);
+        }
+
+        return $this;
+    }
+
+    protected function fetchExtra()
+    {
+        if (isset($this->options['extra']))
+        {
+            $this->extra = (array) $this->options['extra'];
         }
 
         return $this;
@@ -709,6 +728,42 @@ class MenuItem implements ContainerAwareInterface
     public function getEscapedTitle()
     {
         return htmlspecialchars($this->getTitle());
+    }
+
+    /**
+     * Get extra value if specified
+     *
+     * @param string $name
+     * @param mixed $default
+     */
+    public function getExtra($name, $default = null)
+    {
+        return array_key_exists($name, $this->extra) ? $this->extra[$name] : $default;
+    }
+
+    /**
+     * Set extra value
+     *
+     * @param string $name
+     * @param mixed $value
+     *
+     * @return MenuItem
+     */
+    public function setExtra($name, $value)
+    {
+        $this->extra[$name] = $value;
+
+        return $this;
+    }
+
+    /**
+     * Check if the item has the given extra value.
+     *
+     * @param string $name
+     */
+    public function hasExtra($name)
+    {
+        return array_key_exists($name, $this->extra);
     }
 
     /**
