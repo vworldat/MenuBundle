@@ -380,6 +380,9 @@ class MenuItem implements ContainerAwareInterface
         return $this;
     }
 
+    /**
+     * @return MenuItem
+     */
     protected function fetchExtra()
     {
         if (isset($this->options['extra']))
