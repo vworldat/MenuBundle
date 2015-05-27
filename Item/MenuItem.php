@@ -338,6 +338,7 @@ class MenuItem implements ContainerAwareInterface
     protected function initOptions()
     {
         $this
+            ->fetchParent()
             ->fetchItemVariants()
             ->fetchCustomRouteName()
             ->fetchDefaultOptions()
@@ -462,6 +463,7 @@ class MenuItem implements ContainerAwareInterface
         {
             $options['children']['.defaults'] = $this->defaultOptions;
         }
+        $options['parent'] = $this;
 
         $options = array_merge($this->defaultOptions, $options);
         $item = $this->getMenu()->createItem($routeName, $options);
@@ -513,9 +515,24 @@ class MenuItem implements ContainerAwareInterface
      */
     public function addSiblingByData($routeName, array $options)
     {
-        $item = $this->getMenu()->createItem($routeName, $itemData);
+        $item = $this->getMenu()->createItem($routeName, $options);
 
-        return $this->getParent()->addChild($item, $this->getItemPosition() + 1);
+        return $this->getParentItem()->addChild($item, $this->getItemPosition() + 1);
+    }
+
+    /**
+     * Get the position of the current menu item in the parent's list of items.
+     *
+     * @return int
+     */
+    public function getItemPosition()
+    {
+        if ($this->hasParentItem())
+        {
+            return array_search($this, $this->getParentItem()->getChildren());
+        }
+
+        return 0;
     }
 
     /**
@@ -1060,6 +1077,22 @@ class MenuItem implements ContainerAwareInterface
     protected function fetchVisibleIfDisabled()
     {
         return $this->fetchOption('visibleIfDisabled');
+    }
+
+    /**
+     * Check for parent item.
+     *
+     * @return MenuItem
+     */
+    protected function fetchParent()
+    {
+        $parent = $this->getOption('parent');
+        if ($parent instanceof MenuItem)
+        {
+            $this->setParentItem($parent);
+        }
+
+        return $this;
     }
 
     /**
