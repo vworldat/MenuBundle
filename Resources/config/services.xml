@@ -14,8 +14,6 @@
             <argument>%c33s_menu.definitions%</argument>
             <argument type="service" id="service_container" />
             <argument>%c33s_menu.item_class_aliases%</argument>
-                            
-            <call method="initialize" />
         </service>
         
         <service id="c33s_menu.twig.extension" class="%c33s_menu.twig.extension.class%">
