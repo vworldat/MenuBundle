@@ -19,7 +19,7 @@ class MenuBuilder
     protected $menuDefinitions;
     protected $itemClassAliases;
 
-    protected $menus = [];
+    protected $menus;
 
     /**
      * Create a new MenuBuilder instance
@@ -42,6 +42,7 @@ class MenuBuilder
             return;
         }
 
+        $this->menus = [];
         foreach ($this->getMenuDefinitions() as $name => $itemData) {
             if (isset($itemData['.menu_class_name'])) {
                 $menuClass = $itemData['.menu_class_name'];
